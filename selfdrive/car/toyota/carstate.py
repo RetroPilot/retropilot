@@ -222,10 +222,11 @@ class CarState(CarStateBase):
       signals.append(("SET_SPEED", "DSU_CRUISE"))
       checks.append(("DSU_CRUISE", 5))
     else:
-      signals.append(("MAIN_ON", "PCM_CRUISE_2"))
-      signals.append(("SET_SPEED", "PCM_CRUISE_2"))
-      signals.append(("LOW_SPEED_LOCKOUT", "PCM_CRUISE_2"))
-      checks.append(("PCM_CRUISE_2", 33))
+      if CP.carFingerprint != CAR.COROLLA_2010:
+        signals.append(("MAIN_ON", "PCM_CRUISE_2"))
+        signals.append(("SET_SPEED", "PCM_CRUISE_2"))
+        signals.append(("LOW_SPEED_LOCKOUT", "PCM_CRUISE_2"))
+        checks.append(("PCM_CRUISE_2", 33))
 
     # add gas interceptor reading if we are using it
     if CP.enableGasInterceptor:
