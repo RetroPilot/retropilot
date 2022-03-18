@@ -10,7 +10,7 @@ procs = [
   # due to qualcomm kernel bugs SIGKILLing camerad sometimes causes page table corruption
   NativeProcess("camerad", "selfdrive/camerad", ["./camerad"], unkillable=True, driverview=True),
   NativeProcess("clocksd", "selfdrive/clocksd", ["./clocksd"]),
-  NativeProcess("dmonitoringmodeld", "selfdrive/modeld", ["./dmonitoringmodeld"], enabled=(not PC or WEBCAM), driverview=True),
+#  NativeProcess("dmonitoringmodeld", "selfdrive/modeld", ["./dmonitoringmodeld"], enabled=(not PC or WEBCAM), driverview=True),
   NativeProcess("logcatd", "selfdrive/logcatd", ["./logcatd"]),
   NativeProcess("loggerd", "selfdrive/loggerd", ["./loggerd"]),
   NativeProcess("modeld", "selfdrive/modeld", ["./modeld"]),
@@ -25,7 +25,7 @@ procs = [
   PythonProcess("calibrationd", "selfdrive.locationd.calibrationd"),
   PythonProcess("controlsd", "selfdrive.controls.controlsd"),
   PythonProcess("deleter", "selfdrive.loggerd.deleter", persistent=True),
-  PythonProcess("dmonitoringd", "selfdrive.monitoring.dmonitoringd", enabled=(not PC or WEBCAM), driverview=True),
+#  PythonProcess("dmonitoringd", "selfdrive.monitoring.dmonitoringd", enabled=(not PC or WEBCAM), driverview=True),
   PythonProcess("logmessaged", "selfdrive.logmessaged", persistent=True),
   PythonProcess("pandad", "selfdrive.boardd.pandad", persistent=True),
   PythonProcess("paramsd", "selfdrive.locationd.paramsd"),
@@ -34,7 +34,7 @@ procs = [
   PythonProcess("thermald", "selfdrive.thermald.thermald", persistent=True),
   PythonProcess("timezoned", "selfdrive.timezoned", enabled=TICI, persistent=True),
   PythonProcess("tombstoned", "selfdrive.tombstoned", enabled=not PC, persistent=True),
-  PythonProcess("updated", "selfdrive.updated", enabled=not PC, persistent=True),
+#  PythonProcess("updated", "selfdrive.updated", enabled=not PC, persistent=True),
   PythonProcess("uploader", "selfdrive.loggerd.uploader", persistent=True),
   PythonProcess("statsd", "selfdrive.statsd", persistent=True),
 

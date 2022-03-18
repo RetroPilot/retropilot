@@ -42,6 +42,7 @@ class CAR:
   CHRH = "TOYOTA C-HR HYBRID 2018"
   COROLLA = "TOYOTA COROLLA 2017"
   COROLLA_TSS2 = "TOYOTA COROLLA TSS2 2019"
+  COROLLA_2010 = "TOYOTA COROLLA 2010"  
   # LSS2 Lexus UX Hybrid is same as a TSS2 Corolla Hybrid
   COROLLAH_TSS2 = "TOYOTA COROLLA HYBRID TSS2 2019"
   HIGHLANDER = "TOYOTA HIGHLANDER 2017"
@@ -85,6 +86,9 @@ class Footnote(Enum):
   ANGLE_SENSOR = CarFootnote(
     "An inaccurate steering wheel angle sensor makes precise control difficult.",
     Column.STEERING_TORQUE, star=Star.HALF)
+  OLD_CAR = CarFootnote(
+    "This is an old car port, somethings are better (more torque), but most things don't work!",
+    Column.STEERING_TORQUE, star=Star.HALF)
 
 
 @dataclass
@@ -107,6 +111,7 @@ CAR_INFO: Dict[str, Union[ToyotaCarInfo, List[ToyotaCarInfo]]] = {
   CAR.CHR: ToyotaCarInfo("Toyota C-HR 2017-21"),
   CAR.CHRH: ToyotaCarInfo("Toyota C-HR Hybrid 2017-19"),
   CAR.COROLLA: ToyotaCarInfo("Toyota Corolla 2017-19", footnotes=[Footnote.DSU]),
+  CAR.COROLLA_2010: ToyotaCarInfo("Toyota Corolla 2010", footnotes=[Footnote.OLD_CAR]),
   CAR.COROLLA_TSS2: [
     ToyotaCarInfo("Toyota Corolla 2020-22", video_link="https://www.youtube.com/watch?v=_66pXk0CBYA"),
     ToyotaCarInfo("Toyota Corolla Hatchback 2019-22", video_link="https://www.youtube.com/watch?v=_66pXk0CBYA"),
@@ -1755,6 +1760,7 @@ DBC = {
   CAR.PRIUS: dbc_dict('toyota_nodsu_pt_generated', 'toyota_adas'),
   CAR.PRIUS_V: dbc_dict('toyota_new_mc_pt_generated', 'toyota_adas'),
   CAR.COROLLA: dbc_dict('toyota_new_mc_pt_generated', 'toyota_adas'),
+  CAR.COROLLA_2010: dbc_dict('toyota_corolla_2010', 'toyota_adas'),
   CAR.LEXUS_RC: dbc_dict('toyota_tnga_k_pt_generated', 'toyota_adas'),
   CAR.LEXUS_RX: dbc_dict('toyota_tnga_k_pt_generated', 'toyota_adas'),
   CAR.LEXUS_RXH: dbc_dict('toyota_tnga_k_pt_generated', 'toyota_adas'),
@@ -1800,11 +1806,11 @@ TSS2_CAR = {CAR.RAV4_TSS2, CAR.COROLLA_TSS2, CAR.COROLLAH_TSS2, CAR.LEXUS_ES_TSS
             CAR.LEXUS_RX_TSS2, CAR.LEXUS_RXH_TSS2, CAR.HIGHLANDER_TSS2, CAR.HIGHLANDERH_TSS2, CAR.PRIUS_TSS2, CAR.CAMRY_TSS2, CAR.CAMRYH_TSS2,
             CAR.MIRAI, CAR.LEXUS_NX_TSS2, CAR.ALPHARD_TSS2, CAR.AVALON_TSS2}
 
-NO_DSU_CAR = TSS2_CAR | {CAR.CHR, CAR.CHRH, CAR.CAMRY, CAR.CAMRYH}
+NO_DSU_CAR = TSS2_CAR | {CAR.CHR, CAR.CHRH, CAR.CAMRY, CAR.CAMRYH, CAR.COROLLA_2010}
 
 EV_HYBRID_CAR = {CAR.AVALONH_2019, CAR.CAMRYH, CAR.CAMRYH_TSS2, CAR.CHRH, CAR.COROLLAH_TSS2, CAR.HIGHLANDERH, CAR.HIGHLANDERH_TSS2, CAR.PRIUS,
                  CAR.PRIUS_V, CAR.RAV4H, CAR.RAV4H_TSS2, CAR.LEXUS_CTH, CAR.MIRAI, CAR.LEXUS_ESH, CAR.LEXUS_ESH_TSS2, CAR.LEXUS_NXH, CAR.LEXUS_RXH,
                  CAR.LEXUS_RXH_TSS2, CAR.PRIUS_TSS2}
 
 # no resume button press required
-NO_STOP_TIMER_CAR = TSS2_CAR | {CAR.PRIUS_V, CAR.RAV4H, CAR.HIGHLANDERH, CAR.HIGHLANDER, CAR.SIENNA, CAR.LEXUS_ESH}
+NO_STOP_TIMER_CAR = TSS2_CAR | {CAR.PRIUS_V, CAR.RAV4H, CAR.HIGHLANDERH, CAR.HIGHLANDER, CAR.SIENNA, CAR.LEXUS_ESH, CAR.COROLLA_2010}
