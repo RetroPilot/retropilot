@@ -289,4 +289,8 @@ class CarState(CarStateBase):
       signals.append(("ACC_TYPE", "ACC_CONTROL"))
       checks.append(("ACC_CONTROL", 33))
 
+    if CP.carFingerprint == CAR.COROLLA_2010:
+      signals = []
+      checks = []
+
     return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, 2)
