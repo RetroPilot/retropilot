@@ -259,7 +259,8 @@ cereal::PandaState::PandaType Panda::get_hw_type() {
   unsigned char hw_query[1] = {0};
 
   usb_read(0xc1, 0, 0, hw_query, 1);
-  return (cereal::PandaState::PandaType)(hw_query[0]);
+  //return (cereal::PandaState::PandaType)(hw_query[0]);
+  return cereal::PandaState::PandaType::BLACK_PANDA;
 }
 
 void Panda::set_rtc(struct tm sys_time) {
