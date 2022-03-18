@@ -61,6 +61,13 @@ class CarInterface(CarInterfaceBase):
       ret.mass = 2860. * CV.LB_TO_KG + STD_CARGO_KG  # mean between normal and hybrid
       set_lat_tune(ret.lateralTuning, LatTunes.PID_A)
 
+    elif candidate == CAR.COROLLA_2010:
+      ret.wheelbase = 2.70
+      ret.steerRatio = 18.27
+      tire_stiffness_factor = 0.444  # not optimized yet
+      ret.mass = 2860. * CV.LB_TO_KG + STD_CARGO_KG  # mean between normal and hybrid
+      set_lat_tune(ret.lateralTuning, LatTunes.PID_A)
+    
     elif candidate in (CAR.LEXUS_RX, CAR.LEXUS_RXH, CAR.LEXUS_RX_TSS2, CAR.LEXUS_RXH_TSS2):
       stop_and_go = True
       ret.wheelbase = 2.79
