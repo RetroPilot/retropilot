@@ -567,6 +567,7 @@ static void pigeon_publish_raw(PubMaster &pm, const std::string &dat) {
 }
 
 void pigeon_thread(Panda *panda) {
+  return;
   util::set_thread_name("boardd_pigeon");
 
   PubMaster pm({"ubloxRaw"});
