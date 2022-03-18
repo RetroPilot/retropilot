@@ -266,6 +266,9 @@ class CarState(CarStateBase):
       signals.append(("WHEEL_SPEED_RR", "WHEEL_SPEEDS_REAR"))
 
       checks.append(("PCM_CRUISE_SM", 1))
+      checks.append(("WHEEL_SPEEDS_FRONT", 1))
+      checks.append(("WHEEL_SPEEDS_REAR", 1))
+      checks.append(("SECONDARY_STEER_ANGLE", 1))
 
     return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, 0)
 
