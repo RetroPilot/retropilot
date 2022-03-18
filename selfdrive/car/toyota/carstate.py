@@ -26,7 +26,7 @@ class CarState(CarStateBase):
 
     self.low_speed_lockout = False
     self.acc_type = 1
-   
+
     self.use_zss = CP.carFingerprint == CAR.COROLLA_2010
 
     self.angle_offset = 0.
@@ -94,16 +94,16 @@ class CarState(CarStateBase):
     else:
       ret.steeringAngleDeg = cp.vl["STEER_ANGLE_SENSOR"]["STEER_ANGLE"] + cp.vl["STEER_ANGLE_SENSOR"]["STEER_FRACTION"]
       torque_sensor_angle_deg = cp.vl["STEER_TORQUE_SENSOR"]["STEER_ANGLE"]
-  
+
       # On some cars, the angle measurement is non-zero while initializing
       if abs(torque_sensor_angle_deg) > 1e-3 and not bool(cp.vl["STEER_TORQUE_SENSOR"]["STEER_ANGLE_INITIALIZING"]):
         self.accurate_steer_angle_seen = True
-  
+
       if self.accurate_steer_angle_seen:
         # Offset seems to be invalid for large steering angles
         if abs(ret.steeringAngleDeg) < 90 and cp.can_valid:
           self.angle_offset.update(torque_sensor_angle_deg - ret.steeringAngleDeg)
-  
+
         if self.angle_offset.initialized:
           ret.steeringAngleOffsetDeg = self.angle_offset.x
           ret.steeringAngleDeg = torque_sensor_angle_deg - self.angle_offset.x
@@ -181,10 +181,6 @@ class CarState(CarStateBase):
       ("STEER_ANGLE", "STEER_ANGLE_SENSOR"),
       ("GEAR", "GEAR_PACKET"),
       ("BRAKE_PRESSED", "BRAKE_MODULE"),
-      ("WHEEL_SPEED_FL", "WHEEL_SPEEDS"),
-      ("WHEEL_SPEED_FR", "WHEEL_SPEEDS"),
-      ("WHEEL_SPEED_RL", "WHEEL_SPEEDS"),
-      ("WHEEL_SPEED_RR", "WHEEL_SPEEDS"),
       ("DOOR_OPEN_FL", "BODY_CONTROL_STATE"),
       ("DOOR_OPEN_FR", "BODY_CONTROL_STATE"),
       ("DOOR_OPEN_RL", "BODY_CONTROL_STATE"),
@@ -193,11 +189,6 @@ class CarState(CarStateBase):
       ("PARKING_BRAKE", "BODY_CONTROL_STATE"),
       ("TC_DISABLED", "ESP_CONTROL"),
       ("BRAKE_HOLD_ACTIVE", "ESP_CONTROL"),
-      ("STEER_FRACTION", "STEER_ANGLE_SENSOR"),
-      ("STEER_RATE", "STEER_ANGLE_SENSOR"),
-      ("CRUISE_ACTIVE", "PCM_CRUISE"),
-      ("CRUISE_STATE", "PCM_CRUISE"),
-      ("GAS_RELEASED", "PCM_CRUISE"),
       ("STEER_TORQUE_DRIVER", "STEER_TORQUE_SENSOR"),
       ("STEER_TORQUE_EPS", "STEER_TORQUE_SENSOR"),
       ("STEER_ANGLE", "STEER_TORQUE_SENSOR"),
@@ -215,9 +206,7 @@ class CarState(CarStateBase):
       ("ESP_CONTROL", 3),
       ("EPS_STATUS", 25),
       ("BRAKE_MODULE", 40),
-      ("WHEEL_SPEEDS", 80),
       ("STEER_ANGLE_SENSOR", 80),
-      ("PCM_CRUISE", 33),
       ("STEER_TORQUE_SENSOR", 50),
     ]
 
@@ -253,18 +242,21 @@ class CarState(CarStateBase):
       ]
       checks.append(("BSM", 1))
 
+    if CP.carFingerprint != CAR.COROLLA_2010:
+      signals.append(("WHEEL_SPEED_FL", "WHEEL_SPEEDS"))
+      signals.append(("WHEEL_SPEED_FR", "WHEEL_SPEEDS"))
+      signals.append(("WHEEL_SPEED_RL", "WHEEL_SPEEDS"))
+      signals.append(("WHEEL_SPEED_RR", "WHEEL_SPEEDS"))
+      signals.append(("CRUISE_ACTIVE", "PCM_CRUISE"))
+      signals.append(("CRUISE_STATE", "PCM_CRUISE"))
+      signals.append(("GAS_RELEASED", "PCM_CRUISE"))
+      signals.append(("STEER_FRACTION", "STEER_ANGLE_SENSOR"))
+      signals.append(("STEER_RATE", "STEER_ANGLE_SENSOR"))
+
+      checks.append(("PCM_CRUISE", 33))
+      checks.append(("WHEEL_SPEEDS", 80))
+
     if CP.carFingerprint == CAR.COROLLA_2010:
-      signals.remove(("WHEEL_SPEED_FL", "WHEEL_SPEEDS"))
-      signals.remove(("WHEEL_SPEED_FR", "WHEEL_SPEEDS"))
-      signals.remove(("WHEEL_SPEED_RL", "WHEEL_SPEEDS"))
-      signals.remove(("WHEEL_SPEED_RR", "WHEEL_SPEEDS"))
-      signals.remove(("CRUISE_ACTIVE", "PCM_CRUISE"))
-      signals.remove(("CRUISE_STATE", "PCM_CRUISE"))
-      signals.remove(("GAS_RELEASED", "PCM_CRUISE"))
-
-      checks.remove(("PCM_CRUISE", 33))
-      checks.remove(("WHEEL_SPEEDS", 80))
-
       signals.append(("ZORRO_STEER", "SECONDARY_STEER_ANGLE"))
       signals.append(("CRUISE_CONTROL_STATE", "PCM_CRUISE_SM"))
       signals.append(("WHEEL_SPEED_FL", "WHEEL_SPEEDS_FRONT"))
