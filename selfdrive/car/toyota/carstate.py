@@ -142,7 +142,8 @@ class CarState(CarStateBase):
        (self.CP.carFingerprint in TSS2_CAR and self.acc_type == 1):
       self.low_speed_lockout = cp.vl["PCM_CRUISE_2"]["LOW_SPEED_LOCKOUT"] == 2
 
-    self.pcm_acc_status = cp.vl["PCM_CRUISE"]["CRUISE_STATE"]
+    if self.CP.carFingerprint != CAR.COROLLA_2010:
+      self.pcm_acc_status = cp.vl["PCM_CRUISE"]["CRUISE_STATE"]
     if self.CP.carFingerprint in NO_STOP_TIMER_CAR or self.CP.enableGasInterceptor:
       # ignore standstill in hybrid vehicles, since pcm allows to restart without
       # receiving any special command. Also if interceptor is detected
@@ -257,6 +258,12 @@ class CarState(CarStateBase):
       signals.remove(("WHEEL_SPEED_FR", "WHEEL_SPEEDS"))
       signals.remove(("WHEEL_SPEED_RL", "WHEEL_SPEEDS"))
       signals.remove(("WHEEL_SPEED_RR", "WHEEL_SPEEDS"))
+      signals.remove(("CRUISE_ACTIVE", "PCM_CRUISE"))
+      signals.remove(("CRUISE_STATE", "PCM_CRUISE"))
+      signals.remove(("GAS_RELEASED", "PCM_CRUISE"))
+
+      checks.remove(("PCM_CRUISE", 33))
+      checks.remove(("WHEEL_SPEEDS", 80))
 
       signals.append(("ZORRO_STEER", "SECONDARY_STEER_ANGLE"))
       signals.append(("CRUISE_CONTROL_STATE", "PCM_CRUISE_SM"))
