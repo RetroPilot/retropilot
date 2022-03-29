@@ -23,7 +23,10 @@
 /**
  * Camera device HAL 2.1 [ CAMERA_DEVICE_API_VERSION_2_0, CAMERA_DEVICE_API_VERSION_2_1 ]
  *
- * DEPRECATED. New devices should use Camera HAL v3.2 or newer.
+ * NO LONGER SUPPORTED.  The camera service will no longer load HAL modules that
+ * contain HAL v2.0 or v2.1 devices.
+ *
+ * New devices should use Camera HAL v3.2 or newer.
  *
  * Supports the android.hardware.Camera API, and the android.hardware.camera2
  * API in legacy mode only.
@@ -143,7 +146,7 @@ enum {
 typedef struct camera2_jpeg_blob {
     uint16_t jpeg_blob_id;
     uint32_t jpeg_size;
-};
+} camera2_jpeg_blob_t;
 
 enum {
     CAMERA2_JPEG_BLOB_ID = 0x00FF

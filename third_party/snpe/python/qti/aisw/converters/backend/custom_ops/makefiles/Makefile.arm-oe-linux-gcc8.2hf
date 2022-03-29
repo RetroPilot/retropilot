@@ -1,0 +1,27 @@
+# Copyright (c) 2017 Qualcomm Technologies, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Qualcomm Technologies, Inc.
+
+# define library prerequisites list
+lib_cpu := jni/src/CPU
+lib_dsp := jni/src/DSP
+lib_gpu := jni/src/GPU
+lib_reg := jni/src/reg
+LIB_SOURCES = $(lib_cpu) $(lib_dsp) $(lib_gpu) $(lib_reg)
+
+# define target_architecture specific flags
+export TARGET_AARCH_VARS:= -march=armv7-a -mfloat-abi=softfp -mfpu=neon
+
+# define target name
+export TARGET = arm-oe-linux-gcc8.2hf
+
+# User should specify compiler here or as an environment variable
+ifndef CXX
+export CXX ?= arm-linux-gnueabi-g++
+endif
+
+.PHONY: all $(LIB_SOURCES)
+all: $(LIB_SOURCES)
+
+$(LIB_SOURCES):
+	@if [ -d $@ ]; then $(MAKE) -C $@; else echo "Skipping directory. Directory $@ not found"; fi

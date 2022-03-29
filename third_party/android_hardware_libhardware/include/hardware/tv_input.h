@@ -23,7 +23,7 @@
 
 #include <hardware/hardware.h>
 #include <system/audio.h>
-#include <system/window.h>
+#include <cutils/native_handle.h>
 
 __BEGIN_DECLS
 
@@ -278,9 +278,6 @@ typedef struct buffer_producer_stream {
 
     /* OUT: Client must allocate a buffer with this format. */
     uint32_t format;
-
-    /* OUT: Client must allocate buffers based on this count. */
-    uint32_t buffer_count;
 } buffer_producer_stream_t;
 
 typedef struct tv_stream {

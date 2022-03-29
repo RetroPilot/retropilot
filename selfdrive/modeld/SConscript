@@ -4,7 +4,7 @@ Import('env', 'arch', 'cereal', 'messaging', 'common', 'gpucommon', 'visionipc')
 lenv = env.Clone()
 
 libs = [cereal, messaging, common, visionipc, gpucommon,
-        'OpenCL', 'SNPE', 'symphony-cpu', 'capnp', 'zmq', 'kj', 'yuv']
+        'OpenCL', 'SNPE', 'capnp', 'zmq', 'kj', 'yuv', File('/data/openpilot/third_party/android/libgsl.so')]
 
 def get_dlsym_offset():
   """Returns the offset between dlopen and dlsym in libdl.so"""
@@ -33,7 +33,7 @@ use_thneed = not GetOption('no_thneed')
 
 if arch == "aarch64" or arch == "larch64":
   libs += ['gsl', 'CB']
-  libs += ['gnustl_shared'] if arch == "aarch64" else ['pthread', 'dl']
+  #libs += ['gnustl_shared'] if arch == "aarch64" else ['pthread', 'dl']
 
   if use_thneed:
     common_src += thneed_src

@@ -52,18 +52,25 @@ typedef enum {
      */
 
     /* Crypto parameters */
-    KM_TAG_PURPOSE = KM_ENUM_REP | 1,     /* keymaster_purpose_t. */
-    KM_TAG_ALGORITHM = KM_ENUM | 2,       /* keymaster_algorithm_t. */
-    KM_TAG_KEY_SIZE = KM_UINT | 3,        /* Key size in bits. */
-    KM_TAG_BLOCK_MODE = KM_ENUM_REP | 4,  /* keymaster_block_mode_t. */
-    KM_TAG_DIGEST = KM_ENUM_REP | 5,      /* keymaster_digest_t. */
-    KM_TAG_PADDING = KM_ENUM_REP | 6,     /* keymaster_padding_t. */
-    KM_TAG_CALLER_NONCE = KM_BOOL | 7,    /* Allow caller to specify nonce or IV. */
-    KM_TAG_MIN_MAC_LENGTH = KM_UINT | 8,  /* Minimum length of MAC or AEAD authentication tag in
-                                           * bits. */
+    KM_TAG_PURPOSE = KM_ENUM_REP | 1,    /* keymaster_purpose_t. */
+    KM_TAG_ALGORITHM = KM_ENUM | 2,      /* keymaster_algorithm_t. */
+    KM_TAG_KEY_SIZE = KM_UINT | 3,       /* Key size in bits. */
+    KM_TAG_BLOCK_MODE = KM_ENUM_REP | 4, /* keymaster_block_mode_t. */
+    KM_TAG_DIGEST = KM_ENUM_REP | 5,     /* keymaster_digest_t. */
+    KM_TAG_PADDING = KM_ENUM_REP | 6,    /* keymaster_padding_t. */
+    KM_TAG_CALLER_NONCE = KM_BOOL | 7,   /* Allow caller to specify nonce or IV. */
+    KM_TAG_MIN_MAC_LENGTH = KM_UINT | 8, /* Minimum length of MAC or AEAD authentication tag in
+                                          * bits. */
+    KM_TAG_KDF = KM_ENUM_REP | 9,        /* keymaster_kdf_t (keymaster2) */
+    KM_TAG_EC_CURVE = KM_ENUM | 10,      /* keymaster_ec_curve_t (keymaster2) */
 
     /* Algorithm-specific. */
     KM_TAG_RSA_PUBLIC_EXPONENT = KM_ULONG | 200,
+    KM_TAG_ECIES_SINGLE_HASH_MODE = KM_BOOL | 201, /* Whether the ephemeral public key is fed into
+                                                    * the KDF */
+    KM_TAG_INCLUDE_UNIQUE_ID = KM_BOOL | 202,      /* If true, attestation certificates for this key
+                                                    * will contain an application-scoped and
+                                                    * time-bounded device-unique ID. (keymaster2) */
 
     /* Other hardware-enforced. */
     KM_TAG_BLOB_USAGE_REQUIREMENTS = KM_ENUM | 301, /* keymaster_key_blob_usage_requirements_t */
@@ -102,20 +109,56 @@ typedef enum {
                                                    If absent, authentication is required for every
                                                    use.  Authentication state is lost when the
                                                    device is powered off. */
+    KM_TAG_ALLOW_WHILE_ON_BODY = KM_BOOL | 506, /* Allow key to be used after authentication timeout
+                                                 * if device is still on-body (requires secure
+                                                 * on-body sensor. */
+    KM_TAG_TRUSTED_CONFIRMATION_REQUIRED = KM_BOOL | 508, /* Require user confirmation through a
+                                                           * trusted UI to use this key */
+    KM_TAG_UNLOCKED_DEVICE_REQUIRED = KM_BOOL | 509, /* Require the device screen to be unlocked if the
+                                                      * key is used. */
 
     /* Application access control */
-    KM_TAG_ALL_APPLICATIONS = KM_BOOL | 600, /* Reserved for future use -- ignore */
-    KM_TAG_APPLICATION_ID = KM_BYTES | 601,  /* Reserved for fugure use -- ignore */
+    KM_TAG_ALL_APPLICATIONS = KM_BOOL | 600, /* Specified to indicate key is usable by all
+                                              * applications. */
+    KM_TAG_APPLICATION_ID = KM_BYTES | 601,  /* Byte string identifying the authorized
+                                              * application. */
+    KM_TAG_EXPORTABLE = KM_BOOL | 602,       /* If true, private/secret key can be exported, but
+                                              * only if all access control requirements for use are
+                                              * met. (keymaster2) */
 
     /*
      * Semantically unenforceable tags, either because they have no specific meaning or because
      * they're informational only.
      */
-    KM_TAG_APPLICATION_DATA = KM_BYTES | 700,  /* Data provided by authorized application. */
-    KM_TAG_CREATION_DATETIME = KM_DATE | 701,  /* Key creation time */
-    KM_TAG_ORIGIN = KM_ENUM | 702,             /* keymaster_key_origin_t. */
-    KM_TAG_ROLLBACK_RESISTANT = KM_BOOL | 703, /* Whether key is rollback-resistant. */
-    KM_TAG_ROOT_OF_TRUST = KM_BYTES | 704,     /* Root of trust ID. */
+    KM_TAG_APPLICATION_DATA = KM_BYTES | 700,      /* Data provided by authorized application. */
+    KM_TAG_CREATION_DATETIME = KM_DATE | 701,      /* Key creation time */
+    KM_TAG_ORIGIN = KM_ENUM | 702,                 /* keymaster_key_origin_t. */
+    KM_TAG_ROLLBACK_RESISTANT = KM_BOOL | 703,     /* Whether key is rollback-resistant. */
+    KM_TAG_ROOT_OF_TRUST = KM_BYTES | 704,         /* Root of trust ID. */
+    KM_TAG_OS_VERSION = KM_UINT | 705,             /* Version of system (keymaster2) */
+    KM_TAG_OS_PATCHLEVEL = KM_UINT | 706,          /* Patch level of system (keymaster2) */
+    KM_TAG_UNIQUE_ID = KM_BYTES | 707,             /* Used to provide unique ID in attestation */
+    KM_TAG_ATTESTATION_CHALLENGE = KM_BYTES | 708, /* Used to provide challenge in attestation */
+    KM_TAG_ATTESTATION_APPLICATION_ID = KM_BYTES | 709, /* Used to identify the set of possible
+                                                         * applications of which one has initiated
+                                                         * a key attestation */
+    KM_TAG_ATTESTATION_ID_BRAND = KM_BYTES | 710,  /* Used to provide the device's brand name to be
+                                                      included in attestation */
+    KM_TAG_ATTESTATION_ID_DEVICE = KM_BYTES | 711, /* Used to provide the device's device name to be
+                                                      included in attestation */
+    KM_TAG_ATTESTATION_ID_PRODUCT = KM_BYTES | 712, /* Used to provide the device's product name to
+                                                       be included in attestation */
+    KM_TAG_ATTESTATION_ID_SERIAL = KM_BYTES | 713, /* Used to provide the device's serial number to
+                                                      be included in attestation */
+    KM_TAG_ATTESTATION_ID_IMEI = KM_BYTES | 714,   /* Used to provide the device's IMEI to be
+                                                      included in attestation */
+    KM_TAG_ATTESTATION_ID_MEID = KM_BYTES | 715,   /* Used to provide the device's MEID to be
+                                                      included in attestation */
+    KM_TAG_ATTESTATION_ID_MANUFACTURER = KM_BYTES | 716, /* Used to provide the device's
+                                                            manufacturer name to be included in
+                                                            attestation */
+    KM_TAG_ATTESTATION_ID_MODEL = KM_BYTES | 717,  /* Used to provide the device's model name to be
+                                                      included in attestation */
 
     /* Tags used only to provide data to or receive data from operations */
     KM_TAG_ASSOCIATED_DATA = KM_BYTES | 1000, /* Used to provide associated data for AEAD modes. */
@@ -123,28 +166,12 @@ typedef enum {
     KM_TAG_AUTH_TOKEN = KM_BYTES | 1002,      /* Authentication token that proves secure user
                                                  authentication has been performed.  Structure
                                                  defined in hw_auth_token_t in hw_auth_token.h. */
-    KM_TAG_MAC_LENGTH = KM_UINT | 1003,       /* MAC or AEAD authentication tag length in bits. */
+    KM_TAG_MAC_LENGTH = KM_UINT | 1003,       /* MAC or AEAD authentication tag length in
+                                               * bits. */
 
-    /* Tags used only for SOTER */
-    /* Tags used only to check if the key is for SOTER */
-    KM_TAG_SOTER_IS_FROM_SOTER = KM_BOOL | 11000,
-    /* Attach signature signed with ATTK[pri] while exporting public key */
-    KM_TAG_SOTER_IS_AUTO_SIGNED_WITH_ATTK_WHEN_GET_PUBLIC_KEY = KM_BOOL | 11001,
-    /* Attach signature signed with specified private key while exporting public key */
-    KM_TAG_SOTER_IS_AUTO_SIGNED_WITH_COMMON_KEY_WHEN_GET_PUBLIC_KEY = KM_BOOL | 11002,
-    /* keyalias for the keypair of KM_TAG_SOTER_IS_AUTO_SIGNED_WITH_COMMON_KEY_WHEN_GET_PUBLIC_KEY */
-    KM_TAG_SOTER_AUTO_SIGNED_COMMON_KEY_WHEN_GET_PUBLIC_KEY = KM_BYTES | 11003,
-    /* Attach counter while exporting publick key */
-    KM_TAG_SOTER_AUTO_ADD_COUNTER_WHEN_GET_PUBLIC_KEY = KM_BOOL | 11004,
-    /* Attach secmsg(TEE_Name, TEE_Version, Fingerprint_Sensor_Name, Fingerprint_Sensor_Version)
-       fingerprint_id and counter while signing */
-    KM_TAG_SOTER_IS_SECMSG_FID_COUNTER_SIGNED_WHEN_SIGN = KM_BOOL | 11005,
-    /* use and set ATTK index to next backup ATTK */
-    KM_TAG_SOTER_USE_NEXT_ATTK = KM_BOOL | 11006,
-    /* attach soter uid */
-    KM_TAG_SOTER_UID = KM_UINT | 11007,
-    /* attach key blob of KM_TAG_SOTER_AUTO_SIGNED_COMMON_KEY_WHEN_GET_PUBLIC_KEY if needed */
-    KM_TAG_SOTER_AUTO_SIGNED_COMMON_KEY_WHEN_GET_PUBLIC_KEY_BLOB = KM_BYTES | 11008,
+    KM_TAG_RESET_SINCE_ID_ROTATION = KM_BOOL | 1004, /* Whether the device has beeen factory reset
+                                                        since the last unique ID rotation.  Used for
+                                                        key attestation. */
 } keymaster_tag_t;
 
 /**
@@ -159,6 +186,7 @@ typedef enum {
 
     /* Block ciphers algorithms */
     KM_ALGORITHM_AES = 32,
+    KM_ALGORITHM_TRIPLE_DES = 33,
 
     /* MAC algorithms */
     KM_ALGORITHM_HMAC = 128,
@@ -208,6 +236,34 @@ typedef enum {
     KM_DIGEST_SHA_2_512 = 6,
 } keymaster_digest_t;
 
+/*
+ * Key derivation functions, mostly used in ECIES.
+ */
+typedef enum {
+    /* Do not apply a key derivation function; use the raw agreed key */
+    KM_KDF_NONE = 0,
+    /* HKDF defined in RFC 5869 with SHA256 */
+    KM_KDF_RFC5869_SHA256 = 1,
+    /* KDF1 defined in ISO 18033-2 with SHA1 */
+    KM_KDF_ISO18033_2_KDF1_SHA1 = 2,
+    /* KDF1 defined in ISO 18033-2 with SHA256 */
+    KM_KDF_ISO18033_2_KDF1_SHA256 = 3,
+    /* KDF2 defined in ISO 18033-2 with SHA1 */
+    KM_KDF_ISO18033_2_KDF2_SHA1 = 4,
+    /* KDF2 defined in ISO 18033-2 with SHA256 */
+    KM_KDF_ISO18033_2_KDF2_SHA256 = 5,
+} keymaster_kdf_t;
+
+/**
+ * Supported EC curves, used in ECDSA/ECIES.
+ */
+typedef enum {
+    KM_EC_CURVE_P_224 = 0,
+    KM_EC_CURVE_P_256 = 1,
+    KM_EC_CURVE_P_384 = 2,
+    KM_EC_CURVE_P_521 = 3,
+} keymaster_ec_curve_t;
+
 /**
  * The origin of a key (or pair), i.e. where it was generated.  Note that KM_TAG_ORIGIN can be found
  * in either the hardware-enforced or software-enforced list for a key, indicating whether the key
@@ -215,8 +271,9 @@ typedef enum {
  * hardware-enforced list is guaranteed never to have existed outide the secure hardware.
  */
 typedef enum {
-    KM_ORIGIN_GENERATED = 0, /* Generated in keymaster */
-    KM_ORIGIN_IMPORTED = 2,  /* Imported, origin unknown */
+    KM_ORIGIN_GENERATED = 0, /* Generated in keymaster.  Should not exist outside the TEE. */
+    KM_ORIGIN_DERIVED = 1,   /* Derived inside keymaster.  Likely exists off-device. */
+    KM_ORIGIN_IMPORTED = 2,  /* Imported into keymaster.  Existed as cleartext in Android. */
     KM_ORIGIN_UNKNOWN = 3,   /* Keymaster did not record origin.  This value can only be seen on
                               * keys in a keymaster0 implementation.  The keymaster0 adapter uses
                               * this value to document the fact that it is unkown whether the key
@@ -228,7 +285,7 @@ typedef enum {
  * for the key to function.  For example, key "blobs" which are actually handles referencing
  * encrypted key material stored in the file system cannot be used until the file system is
  * available, and should have BLOB_REQUIRES_FILE_SYSTEM.  Other requirements entries will be added
- * as needed for implementations.  This type is new in 0_4.
+ * as needed for implementations.
  */
 typedef enum {
     KM_BLOB_STANDALONE = 0,
@@ -236,13 +293,16 @@ typedef enum {
 } keymaster_key_blob_usage_requirements_t;
 
 /**
- * Possible purposes of a key (or pair). This type is new in 0_4.
+ * Possible purposes of a key (or pair).
  */
 typedef enum {
-    KM_PURPOSE_ENCRYPT = 0,
-    KM_PURPOSE_DECRYPT = 1,
-    KM_PURPOSE_SIGN = 2,
-    KM_PURPOSE_VERIFY = 3,
+    KM_PURPOSE_ENCRYPT = 0,    /* Usable with RSA, EC and AES keys. */
+    KM_PURPOSE_DECRYPT = 1,    /* Usable with RSA, EC and AES keys. */
+    KM_PURPOSE_SIGN = 2,       /* Usable with RSA, EC and HMAC keys. */
+    KM_PURPOSE_VERIFY = 3,     /* Usable with RSA, EC and HMAC keys. */
+    KM_PURPOSE_DERIVE_KEY = 4, /* Usable with EC keys. */
+    KM_PURPOSE_WRAP = 5,       /* Usable with wrapped keys. */
+
 } keymaster_purpose_t;
 
 typedef struct {
@@ -284,14 +344,42 @@ typedef struct {
     size_t key_material_size;
 } keymaster_key_blob_t;
 
+typedef struct {
+    keymaster_blob_t* entries;
+    size_t entry_count;
+} keymaster_cert_chain_t;
+
+typedef enum {
+    KM_VERIFIED_BOOT_VERIFIED = 0,    /* Full chain of trust extending from the bootloader to
+                                       * verified partitions, including the bootloader, boot
+                                       * partition, and all verified partitions*/
+    KM_VERIFIED_BOOT_SELF_SIGNED = 1, /* The boot partition has been verified using the embedded
+                                       * certificate, and the signature is valid. The bootloader
+                                       * displays a warning and the fingerprint of the public
+                                       * key before allowing the boot process to continue.*/
+    KM_VERIFIED_BOOT_UNVERIFIED = 2,  /* The device may be freely modified. Device integrity is left
+                                       * to the user to verify out-of-band. The bootloader
+                                       * displays a warning to the user before allowing the boot
+                                       * process to continue */
+    KM_VERIFIED_BOOT_FAILED = 3,      /* The device failed verification. The bootloader displays a
+                                       * warning and stops the boot process, so no keymaster
+                                       * implementation should ever actually return this value,
+                                       * since it should not run.  Included here only for
+                                       * completeness. */
+} keymaster_verified_boot_t;
+
+typedef enum {
+    KM_SECURITY_LEVEL_SOFTWARE = 0,
+    KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT = 1,
+} keymaster_security_level_t;
+
 /**
- * Formats for key import and export.  At present, only asymmetric key import/export is supported.
- * In the future this list will expand greatly to accommodate asymmetric key import/export.
+ * Formats for key import and export.
  */
 typedef enum {
     KM_KEY_FORMAT_X509 = 0,  /* for public key export */
     KM_KEY_FORMAT_PKCS8 = 1, /* for asymmetric key pair import */
-    KM_KEY_FORMAT_RAW = 3,   /* for symmetric key import */
+    KM_KEY_FORMAT_RAW = 3,   /* for symmetric key import and export*/
 } keymaster_key_format_t;
 
 /**
@@ -361,12 +449,19 @@ typedef enum {
     KM_ERROR_INVALID_MAC_LENGTH = -57,
     KM_ERROR_MISSING_MIN_MAC_LENGTH = -58,
     KM_ERROR_UNSUPPORTED_MIN_MAC_LENGTH = -59,
+    KM_ERROR_UNSUPPORTED_KDF = -60,
+    KM_ERROR_UNSUPPORTED_EC_CURVE = -61,
+    KM_ERROR_KEY_REQUIRES_UPGRADE = -62,
+    KM_ERROR_ATTESTATION_CHALLENGE_MISSING = -63,
+    KM_ERROR_KEYMASTER_NOT_CONFIGURED = -64,
+    KM_ERROR_ATTESTATION_APPLICATION_ID_MISSING = -65,
+    KM_ERROR_CANNOT_ATTEST_IDS = -66,
+    KM_ERROR_NO_USER_CONFIRMATION = -71,
+    KM_ERROR_DEVICE_LOCKED = -72,
 
     KM_ERROR_UNIMPLEMENTED = -100,
     KM_ERROR_VERSION_MISMATCH = -101,
 
-    /* Additional error codes may be added by implementations, but implementers should coordinate
-     * with Google to avoid code collision. */
     KM_ERROR_UNKNOWN_ERROR = -1000,
 } keymaster_error_t;
 
@@ -454,7 +549,7 @@ inline keymaster_key_param_t keymaster_param_date(keymaster_tag_t tag, uint64_t 
 
 #define KEYMASTER_SIMPLE_COMPARE(a, b) (a < b) ? -1 : ((a > b) ? 1 : 0)
 inline int keymaster_param_compare(const keymaster_key_param_t* a, const keymaster_key_param_t* b) {
-    int retval = KEYMASTER_SIMPLE_COMPARE(a->tag, b->tag);
+    int retval = KEYMASTER_SIMPLE_COMPARE((uint32_t)a->tag, (uint32_t)b->tag);
     if (retval != 0)
         return retval;
 
@@ -494,7 +589,7 @@ inline int keymaster_param_compare(const keymaster_key_param_t* a, const keymast
                 return -1;
             if (a->blob.data_length > b->blob.data_length)
                 return 1;
-        };
+        }
     }
 
     return 0;
@@ -502,7 +597,8 @@ inline int keymaster_param_compare(const keymaster_key_param_t* a, const keymast
 #undef KEYMASTER_SIMPLE_COMPARE
 
 inline void keymaster_free_param_values(keymaster_key_param_t* param, size_t param_count) {
-    while (param_count-- > 0) {
+    while (param_count > 0) {
+        param_count--;
         switch (keymaster_tag_get_type(param->tag)) {
         case KM_BIGNUM:
         case KM_BYTES:
@@ -522,6 +618,7 @@ inline void keymaster_free_param_set(keymaster_key_param_set_t* set) {
         keymaster_free_param_values(set->params, set->length);
         free(set->params);
         set->params = NULL;
+        set->length = 0;
     }
 }
 
@@ -529,6 +626,19 @@ inline void keymaster_free_characteristics(keymaster_key_characteristics_t* char
     if (characteristics) {
         keymaster_free_param_set(&characteristics->hw_enforced);
         keymaster_free_param_set(&characteristics->sw_enforced);
+    }
+}
+
+inline void keymaster_free_cert_chain(keymaster_cert_chain_t* chain) {
+    if (chain) {
+        for (size_t i = 0; i < chain->entry_count; ++i) {
+            free((uint8_t*)chain->entries[i].data);
+            chain->entries[i].data = NULL;
+            chain->entries[i].data_length = 0;
+        }
+        free(chain->entries);
+        chain->entries = NULL;
+        chain->entry_count = 0;
     }
 }
 

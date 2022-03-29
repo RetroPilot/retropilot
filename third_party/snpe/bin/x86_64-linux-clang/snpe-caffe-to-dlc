@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+# -*- mode: python -*-
+# ==============================================================================
+#
+#  Copyright (c) 2017-2020 Qualcomm Technologies, Inc.
+#  All Rights Reserved.
+#  Confidential and Proprietary - Qualcomm Technologies, Inc.
+#
+# ==============================================================================
+import traceback
+import sys
+
+try:
+    import qti.aisw
+except ImportError as ie1:
+    print("Failed to find necessary python package")
+    print(str(ie1))
+    print("Please ensure that $SNPE_ROOT/lib/python is in your PYTHONPATH")
+    sys.exit(1)
+
+from qti.aisw.converters import caffe as caffe_converter
+from qti.aisw.converters.backend import NativeBackend
+from qti.aisw.converters.backend.custom_ops.op_factory import UDOFactory
+from qti.aisw.converters.common.converter_ir.op_graph_optimizations import IROptimizations
+from qti.aisw.converters.common.utils.argparser_util import ArgParserWrapper
+
+
+class CaffeToDLCArgParser(ArgParserWrapper):
+    def __init__(self):
+        super(CaffeToDLCArgParser, self).__init__(conflict_handler='resolve',
+                                                  parents=[caffe_converter.CaffeConverterFrontend.ArgParser(),
+                                                           IROptimizations.ArgParser(),
+                                                           NativeBackend.ArgParser()])
+        self.parser.description = 'Script to convert CAFFE model into DLC'
+
+
+if __name__ == '__main__':
+
+    try:
+        parser = CaffeToDLCArgParser()
+        args = parser.parse_args()
+
+        converter = caffe_converter.CaffeConverterFrontend(args,
+                                                           custom_op_factory=UDOFactory())
+        graph = converter.convert()
+
+        args.perform_axes_to_spatial_first_order = True
+        args.prepare_inputs_as_params = True
+        args.match_caffe_ssd_to_tf = True
+        optimizer = IROptimizations(args)
+        optimized_graph = optimizer.optimize(graph)
+
+        # save model as dlc
+        backend = NativeBackend(args)
+        backend.save(optimized_graph)
+    except Exception as e:
+        print("Encountered Error: {}".format(str(e)))
+        print()
+        print('Stack Trace:')
+        traceback.print_exc()
+        sys.exit(1)
+    sys.exit(0)

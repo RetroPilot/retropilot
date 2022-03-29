@@ -1,6 +1,6 @@
 Import('env', 'common', 'cereal', 'messaging', 'libkf', 'transformations')
 
-loc_libs = [cereal, messaging, 'zmq', common, 'capnp', 'kj', 'kaitai', 'pthread']
+loc_libs = [cereal, messaging, 'zmq', common, 'capnp', 'kj', 'kaitai', 'pthread', File('/data/openpilot/third_party/android/libgsl.so')]
 
 if GetOption('kaitai'):
   generated = Dir('generated').srcnode().abspath

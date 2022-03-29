@@ -4,7 +4,11 @@ Import('env', 'arch', 'cereal', 'messaging', 'common', 'visionipc', 'gpucommon')
 libs = [common, cereal, messaging, visionipc,
         'zmq', 'capnp', 'kj', 'z',
         'avformat', 'avcodec', 'swscale', 'avutil',
-        'yuv', 'bz2', 'OpenCL']
+        'yuv', 'bz2', 'OpenCL',
+        File('/vendor/lib64/libplatformconfig.so'),
+        File('/system/lib64/liblzma.so'),
+        File('/data/openpilot/third_party/android/libgsl.so'),
+        File('/vendor/lib64/vendor.qti.hardware.capabilityconfigstore@1.0.so')]
 
 src = ['logger.cc', 'loggerd.cc']
 if arch in ["aarch64", "larch64"]:

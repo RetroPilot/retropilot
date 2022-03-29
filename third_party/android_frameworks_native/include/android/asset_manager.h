@@ -26,8 +26,15 @@
 #ifndef ANDROID_ASSET_MANAGER_H
 #define ANDROID_ASSET_MANAGER_H
 
+#include <sys/cdefs.h>
+#include <sys/types.h>
+
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#if !defined(__ANDROID__) && !defined(__RENAME_IF_FILE_OFFSET64)
+#define __RENAME_IF_FILE_OFFSET64(x)
 #endif
 
 struct AAssetManager;
@@ -129,7 +136,8 @@ int AAsset_read(AAsset* asset, void* buf, size_t count);
  *
  * Returns the new position on success, or (off_t) -1 on error.
  */
-off_t AAsset_seek(AAsset* asset, off_t offset, int whence);
+off_t AAsset_seek(AAsset* asset, off_t offset, int whence)
+    __RENAME_IF_FILE_OFFSET64(AAsset_seek64);
 
 /**
  * Seek to the specified offset within the asset data.  'whence' uses the
@@ -157,7 +165,8 @@ const void* AAsset_getBuffer(AAsset* asset);
 /**
  * Report the total size of the asset data.
  */
-off_t AAsset_getLength(AAsset* asset);
+off_t AAsset_getLength(AAsset* asset)
+    __RENAME_IF_FILE_OFFSET64(AAsset_getLength64);
 
 /**
  * Report the total size of the asset data. Reports the size using a 64-bit
@@ -168,7 +177,8 @@ off64_t AAsset_getLength64(AAsset* asset);
 /**
  * Report the total amount of asset data that can be read from the current position.
  */
-off_t AAsset_getRemainingLength(AAsset* asset);
+off_t AAsset_getRemainingLength(AAsset* asset)
+    __RENAME_IF_FILE_OFFSET64(AAsset_getRemainingLength64);
 
 /**
  * Report the total amount of asset data that can be read from the current position.
@@ -185,7 +195,8 @@ off64_t AAsset_getRemainingLength64(AAsset* asset);
  * Returns < 0 if direct fd access is not possible (for example, if the asset is
  * compressed).
  */
-int AAsset_openFileDescriptor(AAsset* asset, off_t* outStart, off_t* outLength);
+int AAsset_openFileDescriptor(AAsset* asset, off_t* outStart, off_t* outLength)
+    __RENAME_IF_FILE_OFFSET64(AAsset_openFileDescriptor64);
 
 /**
  * Open a new file descriptor that can be used to read the asset data.

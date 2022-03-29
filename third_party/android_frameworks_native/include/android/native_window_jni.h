@@ -26,6 +26,8 @@
 #ifndef ANDROID_NATIVE_WINDOW_JNI_H
 #define ANDROID_NATIVE_WINDOW_JNI_H
 
+#include <sys/cdefs.h>
+
 #include <android/native_window.h>
 
 #include <jni.h>
@@ -41,6 +43,17 @@ extern "C" {
  * when done with it so that it doesn't leak.
  */
 ANativeWindow* ANativeWindow_fromSurface(JNIEnv* env, jobject surface);
+
+#if __ANDROID_API__ >= 26
+/**
+ * Return a Java Surface object derived from the ANativeWindow, for interacting
+ * with it through Java code. The returned Java object acquires a reference on
+ * the ANativeWindow; maintains it through general Java object's life cycle;
+ * and will automatically release the reference when the Java object gets garbage
+ * collected.
+ */
+jobject ANativeWindow_toSurface(JNIEnv* env, ANativeWindow* window) __INTRODUCED_IN(26);
+#endif
 
 #ifdef __cplusplus
 };

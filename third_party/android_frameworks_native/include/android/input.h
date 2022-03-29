@@ -26,6 +26,8 @@
 #ifndef _ANDROID_INPUT_H
 #define _ANDROID_INPUT_H
 
+#include <sys/cdefs.h>
+
 /******************************************************************
  *
  * IMPORTANT NOTICE:
@@ -54,6 +56,10 @@
 #include <android/keycodes.h>
 #include <android/looper.h>
 
+#if !defined(__INTRODUCED_IN)
+#define __INTRODUCED_IN(__api_level) /* nothing */
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -77,7 +83,7 @@ enum {
 };
 
 /**
- * Meta key / modifer state.
+ * Meta key / modifier state.
  */
 enum {
     /** No meta keys are pressed. */
@@ -644,6 +650,28 @@ enum {
      */
     AMOTION_EVENT_AXIS_TILT = 25,
     /**
+     * Axis constant:  Generic scroll axis of a motion event.
+     *
+     * - This is used for scroll axis motion events that can't be classified as strictly
+     *   vertical or horizontal. The movement of a rotating scroller is an example of this.
+     */
+    AMOTION_EVENT_AXIS_SCROLL = 26,
+    /**
+     * Axis constant: The movement of x position of a motion event.
+     *
+     * - For a mouse, reports a difference of x position between the previous position.
+     * This is useful when pointer is captured, in that case the mouse pointer doesn't
+     * change the location but this axis reports the difference which allows the app
+     * to see how the mouse is moved.
+     */
+    AMOTION_EVENT_AXIS_RELATIVE_X = 27,
+    /**
+     * Axis constant: The movement of y position of a motion event.
+     *
+     * Same as {@link RELATIVE_X}, but for y position.
+     */
+    AMOTION_EVENT_AXIS_RELATIVE_Y = 28,
+    /**
      * Axis constant: Generic 1 axis of a motion event.
      * The interpretation of a generic axis is device-specific.
      */
@@ -811,14 +839,16 @@ enum {
     AINPUT_SOURCE_BLUETOOTH_STYLUS = 0x00008000 | AINPUT_SOURCE_STYLUS,
     /** trackball */
     AINPUT_SOURCE_TRACKBALL = 0x00010000 | AINPUT_SOURCE_CLASS_NAVIGATION,
+    /** mouse relative */
+    AINPUT_SOURCE_MOUSE_RELATIVE = 0x00020000 | AINPUT_SOURCE_CLASS_NAVIGATION,
     /** touchpad */
     AINPUT_SOURCE_TOUCHPAD = 0x00100000 | AINPUT_SOURCE_CLASS_POSITION,
     /** navigation */
     AINPUT_SOURCE_TOUCH_NAVIGATION = 0x00200000 | AINPUT_SOURCE_CLASS_NONE,
-    /** gesture sensor (?) */
-    AINPUT_SOURCE_GESTURE_SENSOR = 0x00400000 | AINPUT_SOURCE_CLASS_NONE,
     /** joystick */
     AINPUT_SOURCE_JOYSTICK = 0x01000000 | AINPUT_SOURCE_CLASS_JOYSTICK,
+    /** rotary encoder */
+    AINPUT_SOURCE_ROTARY_ENCODER = 0x00400000 | AINPUT_SOURCE_CLASS_NONE,
 
     /** any */
     AINPUT_SOURCE_ANY = 0xffffff00,
@@ -956,8 +986,10 @@ int32_t AMotionEvent_getFlags(const AInputEvent* motion_event);
  */
 int32_t AMotionEvent_getMetaState(const AInputEvent* motion_event);
 
+#if __ANDROID_API__ >= 14
 /** Get the button state of all buttons that are pressed. */
-int32_t AMotionEvent_getButtonState(const AInputEvent* motion_event);
+int32_t AMotionEvent_getButtonState(const AInputEvent* motion_event) __INTRODUCED_IN(14);
+#endif
 
 /**
  * Get a bitfield indicating which edges, if any, were touched by this motion event.
@@ -1022,12 +1054,14 @@ size_t AMotionEvent_getPointerCount(const AInputEvent* motion_event);
  */
 int32_t AMotionEvent_getPointerId(const AInputEvent* motion_event, size_t pointer_index);
 
+#if __ANDROID_API__ >= 14
 /**
  * Get the tool type of a pointer for the given pointer index.
  * The tool type indicates the type of tool used to make contact such as a
  * finger or stylus, if known.
  */
-int32_t AMotionEvent_getToolType(const AInputEvent* motion_event, size_t pointer_index);
+int32_t AMotionEvent_getToolType(const AInputEvent* motion_event, size_t pointer_index) __INTRODUCED_IN(14);
+#endif
 
 /**
  * Get the original raw X coordinate of this event.
@@ -1117,9 +1151,11 @@ float AMotionEvent_getToolMinor(const AInputEvent* motion_event, size_t pointer_
  */
 float AMotionEvent_getOrientation(const AInputEvent* motion_event, size_t pointer_index);
 
+#if __ANDROID_API__ >= 13
 /** Get the value of the request axis for the given pointer index. */
 float AMotionEvent_getAxisValue(const AInputEvent* motion_event,
-        int32_t axis, size_t pointer_index);
+        int32_t axis, size_t pointer_index) __INTRODUCED_IN(13);
+#endif
 
 /**
  * Get the number of historical points in this event.  These are movements that
@@ -1250,12 +1286,14 @@ float AMotionEvent_getHistoricalToolMinor(const AInputEvent* motion_event, size_
 float AMotionEvent_getHistoricalOrientation(const AInputEvent* motion_event, size_t pointer_index,
         size_t history_index);
 
+#if __ANDROID_API__ >= 13
 /**
  * Get the historical value of the request axis for the given pointer index
  * that occurred between this event and the previous motion event.
  */
 float AMotionEvent_getHistoricalAxisValue(const AInputEvent* motion_event,
-        int32_t axis, size_t pointer_index, size_t history_index);
+        int32_t axis, size_t pointer_index, size_t history_index) __INTRODUCED_IN(13);
+#endif
 
 
 struct AInputQueue;

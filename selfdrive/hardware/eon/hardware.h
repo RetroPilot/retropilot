@@ -30,7 +30,7 @@ public:
     }
   };
   static void set_display_power(bool on) {
-    auto dtoken = android::SurfaceComposerClient::getBuiltInDisplay(android::ISurfaceComposer::eDisplayIdMain);
+    auto dtoken = android::SurfaceComposerClient::getInternalDisplayToken();
     android::SurfaceComposerClient::setDisplayPowerMode(dtoken, on ? HWC_POWER_MODE_NORMAL : HWC_POWER_MODE_OFF);
   };
 

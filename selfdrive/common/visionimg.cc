@@ -25,27 +25,21 @@ EGLImageTexture::EGLImageTexture(const VisionBuf *buf) {
                              buf->stride/bpp, buf->len/buf->stride,
                              buf->width, buf->height);
 
-  // GraphicBuffer is ref counted by EGLClientBuffer(ANativeWindowBuffer), no need and not possible to release.
-#ifndef ANDROID_9
-  GraphicBuffer* gb = new GraphicBuffer(buf->width, buf->height, (PixelFormat)format,
-                                        GraphicBuffer::USAGE_HW_TEXTURE, buf->stride/bpp, (private_handle_t*)private_handle, false);
-#else
-  GraphicBuffer* gb = new GraphicBuffer((private_handle_t*)private_handle, GraphicBuffer::WRAP_HANDLE, buf->width, buf->height, (PixelFormat)format,
-                                        1, (uint64_t)GraphicBuffer::USAGE_HW_TEXTURE, buf->stride/bpp);
-#endif
-
-
-  EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-  assert(display != EGL_NO_DISPLAY);
-
-  EGLint img_attrs[] = {EGL_IMAGE_PRESERVED_KHR, EGL_TRUE, EGL_NONE};
-  img_khr = eglCreateImageKHR(display, EGL_NO_CONTEXT,
-                              EGL_NATIVE_BUFFER_ANDROID, gb->getNativeBuffer(), img_attrs);
-  assert(img_khr != EGL_NO_IMAGE_KHR);
-
-  glGenTextures(1, &frame_tex);
-  glBindTexture(GL_TEXTURE_2D, frame_tex);
-  glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, img_khr);
+  // GraphicBuffer is ref counted by EGLClientBuffer(ANativeWindowBuffer), no need and not possible to release.	
+//  GraphicBuffer* gb = new GraphicBuffer(buf->width, buf->height, (PixelFormat)format,
+//                                        GraphicBuffer::USAGE_HW_TEXTURE, buf->stride/bpp, (private_handle_t*)private_handle, false);
+//
+//  EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+//  assert(display != EGL_NO_DISPLAY);
+//
+//  EGLint img_attrs[] = {EGL_IMAGE_PRESERVED_KHR, EGL_TRUE, EGL_NONE};
+//  img_khr = eglCreateImageKHR(display, EGL_NO_CONTEXT,
+//                              EGL_NATIVE_BUFFER_ANDROID, gb->getNativeBuffer(), img_attrs);
+//  assert(img_khr != EGL_NO_IMAGE_KHR);
+//
+//  glGenTextures(1, &frame_tex);
+//  glBindTexture(GL_TEXTURE_2D, frame_tex);
+//  glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, img_khr);
 }
 
 EGLImageTexture::~EGLImageTexture() {

@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+# -*- mode: python -*-
+# ==============================================================================
+#
+#  Copyright (c) 2018-2020 Qualcomm Technologies, Inc.
+#  All Rights Reserved.
+#  Confidential and Proprietary - Qualcomm Technologies, Inc.
+# ==============================================================================
+import sys
+import traceback
+
+try:
+    import qti.aisw
+except ImportError as ie1:
+    print("Failed to find necessary python package")
+    print(str(ie1))
+    print("Please ensure that $SNPE_ROOT/lib/python is in your PYTHONPATH")
+    sys.exit(1)
+
+from qti.aisw.converters import onnx as onnx_converter
+from qti.aisw.converters.backend import NativeBackend
+from qti.aisw.converters.common.converter_ir.op_graph_optimizations import IROptimizations
+from qti.aisw.converters.common.utils.argparser_util import ArgParserWrapper
+from qti.aisw.converters.backend.custom_ops.op_factory import UDOFactory
+
+class OnnxToDLCArgParser(ArgParserWrapper):
+    def __init__(self):
+        super(OnnxToDLCArgParser, self).__init__(conflict_handler='resolve',
+                                                 parents=[onnx_converter.OnnxConverterFrontend.ArgParser(),
+                                                          IROptimizations.ArgParser(),
+                                                          NativeBackend.ArgParser()])
+        self.parser.description = 'Script to convert ONNX model into DLC'
+
+
+if __name__ == '__main__':
+    try:
+        parser = OnnxToDLCArgParser()
+        args = parser.parse_args()
+
+        converter = onnx_converter.OnnxConverterFrontend(args, custom_op_factory=UDOFactory())
+        graph = converter.convert()
+
+        args.perform_axes_to_spatial_first_order = True
+        args.prepare_inputs_as_params = True
+        args.use_convert_quantization_nodes = True
+        args.align_matmul_ranks = True
+        optimizer = IROptimizations(args)
+        optimized_graph = optimizer.optimize(graph)
+
+        # save native model
+        backend = NativeBackend(args)
+        backend.save(optimized_graph)
+    except Exception as e:
+        print("Encountered Error: {}".format(str(e)))
+        print()
+        print('Stack Trace:')
+        traceback.print_exc()
+        sys.exit(1)
+    sys.exit(0)

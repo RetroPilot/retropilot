@@ -1,0 +1,43 @@
+#!/usr/bin/env python3
+# -*- mode: python -*-
+# ==============================================================================
+#
+#  Copyright (c) 2018-2021 Qualcomm Technologies, Inc.
+#  All Rights Reserved.
+#  Confidential and Proprietary - Qualcomm Technologies, Inc.
+#
+# ==============================================================================
+
+import sys
+try:
+    import qti.aisw
+except ImportError as ie1:
+    print("Failed to find necessary python package")
+    print(str(ie1))
+    print("Please ensure that $SNPE_ROOT/lib/python is in your PYTHONPATH")
+    sys.exit(1)
+
+from qti.aisw.converters.backend.custom_ops.snpe_udo_package_generator import AutoGenerator
+from qti.aisw.converters.common.utils.converter_utils import *
+
+if __name__ == '__main__':
+    auto_generator = AutoGenerator()
+    args = auto_generator.parser.parse_args()
+    if args.debug:
+        setup_logging(0)
+    else:
+        setup_logging(-1)
+
+    # steps
+    auto_generator.parse_config(args.config_path, output_path=args.output_path)
+    package_paths = auto_generator.setup_file_paths(ignore_includes=args.ignore_includes,
+                                                    force_generation=args.force_generation,
+                                                    config_path=args.config_path)
+    auto_generator.implement_packages(gen_cmake=args.gen_cmakelists)
+
+    if auto_generator.generation_is_complete():
+        for package_path in package_paths:
+            log_info('Package has been successfully generated at {}.'.format(package_path[0]))
+    else:
+        log_warning('Package could not be successfully generated. Please run --debug for more detailed information.')
+

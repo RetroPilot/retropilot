@@ -86,6 +86,10 @@ if arch == "aarch64" or arch == "larch64":
 
   cpppath = [
     "#third_party/opencl/include",
+    '#third_party/android10',
+    '#third_party/libhidl/base/include',
+    '#third_party/libhidl/transport/token/1.0/utils/include',
+    '#third_party/android10/bionic/libc/include'
   ]
 
   libpath = [

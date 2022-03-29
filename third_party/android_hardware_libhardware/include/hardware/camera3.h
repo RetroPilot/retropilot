@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 The Android Open Source Project
+ * Copyright (C) 2013-2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,21 +21,21 @@
 #include "camera_common.h"
 
 /**
- * Camera device HAL 3.3 [ CAMERA_DEVICE_API_VERSION_3_3 ]
+ * Camera device HAL 3.6[ CAMERA_DEVICE_API_VERSION_3_6 ]
  *
  * This is the current recommended version of the camera device HAL.
  *
  * Supports the android.hardware.Camera API, and as of v3.2, the
- * android.hardware.camera2 API in LIMITED or FULL modes.
+ * android.hardware.camera2 API as LIMITED or above hardware level.
  *
  * Camera devices that support this version of the HAL must return
- * CAMERA_DEVICE_API_VERSION_3_3 in camera_device_t.common.version and in
+ * CAMERA_DEVICE_API_VERSION_3_6 in camera_device_t.common.version and in
  * camera_info_t.device_version (from camera_module_t.get_camera_info).
  *
- * CAMERA_DEVICE_API_VERSION_3_3:
- *    Camera modules that may contain version 3.3 devices must implement at
- *    least version 2.2 of the camera module interface (as defined by
- *    camera_module_t.common.module_api_version).
+ * CAMERA_DEVICE_API_VERSION_3_3 and above:
+ *    Camera modules that may contain version 3.3 or above devices must
+ *    implement at least version 2.2 of the camera module interface (as defined
+ *    by camera_module_t.common.module_api_version).
  *
  * CAMERA_DEVICE_API_VERSION_3_2:
  *    Camera modules that may contain version 3.2 devices must implement at
@@ -136,6 +136,71 @@
  *   - Addition of rotation field to camera3_stream_t.
  *
  *   - Addition of camera3 stream configuration operation mode to camera3_stream_configuration_t
+ *
+ * 3.4: Minor additions to supported metadata and changes to data_space support
+ *
+ *   - Add ANDROID_SENSOR_OPAQUE_RAW_SIZE static metadata as mandatory if
+ *     RAW_OPAQUE format is supported.
+ *
+ *   - Add ANDROID_CONTROL_POST_RAW_SENSITIVITY_BOOST_RANGE static metadata as
+ *     mandatory if any RAW format is supported
+ *
+ *   - Switch camera3_stream_t data_space field to a more flexible definition,
+ *     using the version 0 definition of dataspace encoding.
+ *
+ *   - General metadata additions which are available to use for HALv3.2 or
+ *     newer:
+ *     - ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_3
+ *     - ANDROID_CONTROL_POST_RAW_SENSITIVITY_BOOST
+ *     - ANDROID_CONTROL_POST_RAW_SENSITIVITY_BOOST_RANGE
+ *     - ANDROID_SENSOR_DYNAMIC_BLACK_LEVEL
+ *     - ANDROID_SENSOR_DYNAMIC_WHITE_LEVEL
+ *     - ANDROID_SENSOR_OPAQUE_RAW_SIZE
+ *     - ANDROID_SENSOR_OPTICAL_BLACK_REGIONS
+ *
+ * 3.5: Minor revisions to support session parameters and logical multi camera:
+ *
+ *   - Add ANDROID_REQUEST_AVAILABLE_SESSION_KEYS static metadata, which is
+ *     optional for implementations that want to support session parameters. If support is
+ *     needed, then Hal should populate the list with all available capture request keys
+ *     that can cause severe processing delays when modified by client. Typical examples
+ *     include parameters that require time-consuming HW re-configuration or internal camera
+ *     pipeline update.
+ *
+ *   - Add a session parameter field to camera3_stream_configuration which can be populated
+ *     by clients with initial values for the keys found in ANDROID_REQUEST_AVAILABLE_SESSION_KEYS.
+ *
+ *   - Metadata additions for logical multi camera capability:
+ *     - ANDROID_REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA
+ *     - ANDROID_LOGICAL_MULTI_CAMERA_PHYSICAL_IDS
+ *     - ANDROID_LOGICAL_MULTI_CAMERA_SYNC_TYPE
+ *
+ *   - Add physical camera id field in camera3_stream, so that for a logical
+ *     multi camera, the application has the option to specify which physical camera
+ *     a particular stream is configured on.
+ *
+ *   - Add physical camera id and settings field in camera3_capture_request, so that
+ *     for a logical multi camera, the application has the option to specify individual
+ *     settings for a particular physical device.
+ *
+ * 3.6: Minor revisions to support HAL buffer management APIs:
+ *
+ *   - Add ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION static metadata, which allows HAL to
+ *     opt in to the new buffer management APIs described below.
+ *
+ *   - Add request_stream_buffers() and return_stream_buffers() to camera3_callback_ops_t for HAL to
+ *     request and return output buffers from camera service.
+ *
+ *   - Add signal_stream_flush() to camera3_device_ops_t for camera service to notify HAL an
+ *     upcoming configure_streams() call requires HAL to return buffers of certain streams.
+ *
+ *   - Add CAMERA3_JPEG_APP_SEGMENTS_BLOB_ID to support BLOB with only JPEG apps
+ *     segments and thumbnail (without main image bitstream). Camera framework
+ *     uses such stream togerther with a HAL YUV_420_888/IMPLEMENTATION_DEFINED
+ *     stream to encode HEIC (ISO/IEC 23008-12) image.
+ *
+ *   - Add is_reconfiguration_required() to camera3_device_ops_t to enable HAL to skip or
+ *     trigger stream reconfiguration depending on new session parameter values.
  *
  */
 
@@ -1267,7 +1332,7 @@
  *      To avoid excessive amount of noise reduction and insufficient amount of edge enhancement
  *      being applied to the input buffer, the application can hint the HAL  how much effective
  *      exposure time improvement has been done by the application, then the HAL can adjust the
- *      noise reduction and edge enhancement paramters to get best reprocessed image quality.
+ *      noise reduction and edge enhancement parameters to get best reprocessed image quality.
  *      Below tag can be used for this purpose:
  *          - android.reprocess.effectiveExposureFactor
  *      The value would be exposure time increase factor applied to the original output image,
@@ -1459,6 +1524,13 @@ typedef enum camera3_stream_configuration_mode {
      *      android.lens.opticalStabilizationMode (if it is supported)
      *      android.scaler.cropRegion
      *      android.statistics.faceDetectMode (if it is supported)
+     *   6. To reduce the amount of data passed across process boundaries at
+     *      high frame rate, within one batch, camera framework only propagates
+     *      the last shutter notify and the last capture results (including partial
+     *      results and final result) to the app. The shutter notifies and capture
+     *      results for the other requests in the batch are derived by
+     *      the camera framework. As a result, the HAL can return empty metadata
+     *      except for the last result in the batch.
      *
      * For more details about high speed stream requirements, see
      * android.control.availableHighSpeedVideoConfigurations and CONSTRAINED_HIGH_SPEED_VIDEO
@@ -1577,6 +1649,13 @@ typedef struct camera3_stream {
      *   value of this is 0.
      *   For all streams passed via configure_streams(), the HAL must write
      *   over this field with its usage flags.
+     *
+     *   From Android O, the usage flag for an output stream may be bitwise
+     *   combination of usage flags for multiple consumers, for the purpose of
+     *   sharing one camera stream between those consumers. The HAL must fail
+     *   configure_streams call with -EINVAL if the combined flags cannot be
+     *   supported due to imcompatible buffer format, dataSpace, or other hardware
+     *   limitations.
      */
     uint32_t usage;
 
@@ -1611,11 +1690,19 @@ typedef struct camera3_stream {
      *   be HAL_DATASPACE_UNKNOWN, and the appropriate color space, etc, should
      *   be determined from the usage flags and the format.
      *
-     * >= CAMERA_DEVICE_API_VERSION_3_3:
+     * = CAMERA_DEVICE_API_VERSION_3_3:
      *
      *   Always set by the camera service. HAL must use this dataSpace to
      *   configure the stream to the correct colorspace, or to select between
-     *   color and depth outputs if supported.
+     *   color and depth outputs if supported. The dataspace values are the
+     *   legacy definitions in graphics.h
+     *
+     * >= CAMERA_DEVICE_API_VERSION_3_4:
+     *
+     *   Always set by the camera service. HAL must use this dataSpace to
+     *   configure the stream to the correct colorspace, or to select between
+     *   color and depth outputs if supported. The dataspace values are set
+     *   using the V0 dataspace definitions in graphics.h
      */
     android_dataspace_t data_space;
 
@@ -1645,8 +1732,31 @@ typedef struct camera3_stream {
      */
     int rotation;
 
+    /**
+     * The physical camera id this stream belongs to.
+     *
+     * <= CAMERA_DEVICE_API_VERISON_3_4:
+     *
+     *    Not defined and must not be accessed.
+     *
+     * >= CAMERA_DEVICE_API_VERISON_3_5:
+     *
+     *    Always set by camera service. If the camera device is not a logical
+     *    multi camera, or if the camera is a logical multi camera but the stream
+     *    is not a physical output stream, this field will point to a 0-length
+     *    string.
+     *
+     *    A logical multi camera is a camera device backed by multiple physical
+     *    cameras that are also exposed to the application. And for a logical
+     *    multi camera, a physical output stream is an output stream specifically
+     *    requested on an underlying physical camera.
+     *
+     *    For an input stream, this field is guaranteed to be a 0-length string.
+     */
+    const char* physical_camera_id;
+
     /* reserved for future use */
-    void *reserved[7];
+    void *reserved[6];
 
 } camera3_stream_t;
 
@@ -1680,16 +1790,30 @@ typedef struct camera3_stream_configuration {
     /**
      * >= CAMERA_DEVICE_API_VERSION_3_3:
      *
-     * The operation mode of streams in this configuration, one of the value defined in
-     * camera3_stream_configuration_mode_t.
-     * The HAL can use this mode as an indicator to set the stream property (e.g.,
-     * camera3_stream->max_buffers) appropriately. For example, if the configuration is
-     * CAMERA3_STREAM_CONFIGURATION_CONSTRAINED_HIGH_SPEED_MODE, the HAL may want to set aside more
-     * buffers for batch mode operation (see android.control.availableHighSpeedVideoConfigurations
-     * for batch mode definition).
+     * The operation mode of streams in this configuration, one of the value
+     * defined in camera3_stream_configuration_mode_t.  The HAL can use this
+     * mode as an indicator to set the stream property (e.g.,
+     * camera3_stream->max_buffers) appropriately. For example, if the
+     * configuration is
+     * CAMERA3_STREAM_CONFIGURATION_CONSTRAINED_HIGH_SPEED_MODE, the HAL may
+     * want to set aside more buffers for batch mode operation (see
+     * android.control.availableHighSpeedVideoConfigurations for batch mode
+     * definition).
      *
      */
     uint32_t operation_mode;
+
+    /**
+     * >= CAMERA_DEVICE_API_VERSION_3_5:
+     *
+     * The session metadata buffer contains the initial values of
+     * ANDROID_REQUEST_AVAILABLE_SESSION_KEYS. This field is optional
+     * and camera clients can choose to ignore it, in which case it will
+     * be set to NULL. If parameters are present, then Hal should examine
+     * the parameter values and configure its internal camera pipeline
+     * accordingly.
+     */
+    const camera_metadata_t *session_parameters;
 } camera3_stream_configuration_t;
 
 /**
@@ -1836,21 +1960,25 @@ typedef struct camera3_stream_buffer_set {
 /**
  * camera3_jpeg_blob:
  *
- * Transport header for compressed JPEG buffers in output streams.
+ * Transport header for compressed JPEG or JPEG_APP_SEGMENTS buffers in output streams.
  *
- * To capture JPEG images, a stream is created using the pixel format
+ * To capture JPEG or JPEG_APP_SEGMENTS images, a stream is created using the pixel format
  * HAL_PIXEL_FORMAT_BLOB. The buffer size for the stream is calculated by the
- * framework, based on the static metadata field android.jpeg.maxSize. Since
- * compressed JPEG images are of variable size, the HAL needs to include the
- * final size of the compressed image using this structure inside the output
- * stream buffer. The JPEG blob ID field must be set to CAMERA3_JPEG_BLOB_ID.
+ * framework, based on the static metadata field android.jpeg.maxSize for JPEG,
+ * and android.jpeg.maxAppsSegments for JPEG_APP_SEGMENTS.
  *
- * Transport header should be at the end of the JPEG output stream buffer. That
+ * Since compressed JPEG/JPEG_APP_SEGMENTS images are of variable size, the HAL needs to
+ * include the final size of the image using this structure inside the output
+ * stream buffer. The JPEG blob ID field must be set to CAMERA3_JPEG_BLOB_ID for
+ * JPEG and CAMERA3_JPEG_APP_SEGMENTS_BLOB_ID for APP segments.
+ *
+ * Transport header should be at the end of the output stream buffer. That
  * means the jpeg_blob_id must start at byte[buffer_size -
  * sizeof(camera3_jpeg_blob)], where the buffer_size is the size of gralloc buffer.
- * Any HAL using this transport header must account for it in android.jpeg.maxSize
- * The JPEG data itself starts at the beginning of the buffer and should be
- * jpeg_size bytes long.
+ * The blob data itself starts at the beginning of the buffer and should be
+ * jpeg_size bytes long. HAL using this transport header for JPEG must account for
+ * it in android.jpeg.maxSize. For JPEG APP segments, camera framework makes
+ * sure that the output stream buffer is large enough for the transport header.
  */
 typedef struct camera3_jpeg_blob {
     uint16_t jpeg_blob_id;
@@ -1858,7 +1986,8 @@ typedef struct camera3_jpeg_blob {
 } camera3_jpeg_blob_t;
 
 enum {
-    CAMERA3_JPEG_BLOB_ID = 0x00FF
+    CAMERA3_JPEG_BLOB_ID = 0x00FF,
+    CAMERA3_JPEG_APP_SEGMENTS_BLOB_ID = 0x0100,
 };
 
 /**********************************************************************
@@ -1924,6 +2053,14 @@ typedef enum camera3_error_msg_code {
      * available. Subsequent requests are unaffected, and the device remains
      * operational.  The frame_number field specifies the request for which
      * result metadata won't be available.
+     *
+     * >= CAMERA_DEVICE_API_VERSION_3_6:
+     *
+     * In case the result metadata is absent for a logical camera device, then the
+     * error_stream pointer must be set to NULL.
+     * If the result metadata cannot be produced for a physical camera device, then
+     * error_stream must contain a pointer to a respective stream associated with
+     * that physical device.
      */
     CAMERA3_MSG_ERROR_RESULT = 3,
 
@@ -1933,7 +2070,7 @@ typedef enum camera3_error_msg_code {
      * available. Subsequent requests are unaffected, and the device remains
      * operational. The frame_number field specifies the request for which the
      * buffer was dropped, and error_stream contains a pointer to the stream
-     * that dropped the frame.u
+     * that dropped the frame.
      */
     CAMERA3_MSG_ERROR_BUFFER = 4,
 
@@ -2020,6 +2157,153 @@ typedef struct camera3_notify_msg {
     } message;
 
 } camera3_notify_msg_t;
+
+
+/**********************************************************************
+ *
+ * Types definition for request_stream_buffers() callback.
+ *
+ */
+
+/**
+ * camera3_buffer_request_status_t:
+ *
+ * The overall buffer request status returned by request_stream_buffers()
+ */
+typedef enum camera3_buffer_request_status {
+    /**
+     * request_stream_buffers() call succeeded and all requested buffers are
+     * returned.
+     */
+    CAMERA3_BUF_REQ_OK = 0,
+
+    /**
+     * request_stream_buffers() call failed for some streams.
+     * Check per stream status for each returned camera3_stream_buffer_ret_t.
+     */
+    CAMERA3_BUF_REQ_FAILED_PARTIAL = 1,
+
+    /**
+     * request_stream_buffers() call failed for all streams and no buffers are
+     * returned at all. Camera service is about to or is performing
+     * configure_streams() call. HAL must wait until next configure_streams()
+     * call is finished before requesting buffers again.
+     */
+    CAMERA3_BUF_REQ_FAILED_CONFIGURING = 2,
+
+    /**
+     * request_stream_buffers() call failed for all streams and no buffers are
+     * returned at all. Failure due to bad camera3_buffer_request input, eg:
+     * unknown stream or repeated stream in the list of buffer requests.
+     */
+    CAMERA3_BUF_REQ_FAILED_ILLEGAL_ARGUMENTS = 3,
+
+    /**
+     * request_stream_buffers() call failed for all streams and no buffers are
+     * returned at all. This can happen for unknown reasons or a combination
+     * of different failure reasons per stream. For the latter case, caller can
+     * check per stream failure reason returned in camera3_stream_buffer_ret.
+     */
+    CAMERA3_BUF_REQ_FAILED_UNKNOWN = 4,
+
+    /**
+     * Number of buffer request status
+     */
+    CAMERA3_BUF_REQ_NUM_STATUS
+
+} camera3_buffer_request_status_t;
+
+/**
+ * camera3_stream_buffer_req_status_t:
+ *
+ * The per stream buffer request status returned by request_stream_buffers()
+ */
+typedef enum camera3_stream_buffer_req_status {
+    /**
+     * Get buffer succeeds and all requested buffers are returned.
+     */
+    CAMERA3_PS_BUF_REQ_OK = 0,
+
+    /**
+     * Get buffer failed due to timeout waiting for an available buffer. This is
+     * likely due to the client application holding too many buffers, or the
+     * system is under memory pressure.
+     * This is not a fatal error. HAL can try to request buffer for this stream
+     * later. If HAL cannot get a buffer for certain capture request in time
+     * due to this error, HAL can send an ERROR_REQUEST to camera service and
+     * drop processing that request.
+     */
+    CAMERA3_PS_BUF_REQ_NO_BUFFER_AVAILABLE = 1,
+
+    /**
+     * Get buffer failed due to HAL has reached its maxBuffer count. This is not
+     * a fatal error. HAL can try to request buffer for this stream again after
+     * it returns at least one buffer of that stream to camera service.
+     */
+    CAMERA3_PS_BUF_REQ_MAX_BUFFER_EXCEEDED = 2,
+
+    /**
+     * Get buffer failed due to the stream is disconnected by client
+     * application, has been removed, or not recognized by camera service.
+     * This means application is no longer interested in this stream.
+     * Requesting buffer for this stream will never succeed after this error is
+     * returned. HAL must safely return all buffers of this stream after
+     * getting this error. If HAL gets another capture request later targeting
+     * a disconnected stream, HAL must send an ERROR_REQUEST to camera service
+     * and drop processing that request.
+     */
+    CAMERA3_PS_BUF_REQ_STREAM_DISCONNECTED = 3,
+
+    /**
+     * Get buffer failed for unknown reason. This is a fatal error and HAL must
+     * send ERROR_DEVICE to camera service and be ready to be closed.
+     */
+    CAMERA3_PS_BUF_REQ_UNKNOWN_ERROR = 4,
+
+    /**
+     * Number of buffer request status
+     */
+    CAMERA3_PS_BUF_REQ_NUM_STATUS
+} camera3_stream_buffer_req_status_t;
+
+typedef struct camera3_buffer_request {
+    /**
+     * The stream HAL wants to request buffer from
+     */
+    camera3_stream_t *stream;
+
+    /**
+     * The number of buffers HAL requested
+     */
+    uint32_t num_buffers_requested;
+} camera3_buffer_request_t;
+
+typedef struct camera3_stream_buffer_ret {
+    /**
+     * The stream HAL wants to request buffer from
+     */
+    camera3_stream_t *stream;
+
+    /**
+     * The status of buffer request of this stream
+     */
+    camera3_stream_buffer_req_status_t status;
+
+    /**
+     * Number of output buffers returned. Must be 0 when above status is not
+     * CAMERA3_PS_BUF_REQ_OK; otherwise the value must be equal to
+     * num_buffers_requested in the corresponding camera3_buffer_request_t
+     */
+    uint32_t num_output_buffers;
+
+    /**
+     * The returned output buffers for the stream.
+     * Caller of request_stream_buffers() should supply this with enough memory
+     * (num_buffers_requested * sizeof(camera3_stream_buffer_t))
+     */
+    camera3_stream_buffer_t *output_buffers;
+} camera3_stream_buffer_ret_t;
+
 
 /**********************************************************************
  *
@@ -2172,6 +2456,44 @@ typedef struct camera3_capture_request {
      * request (having never before seen by the HAL).
      */
     const camera3_stream_buffer_t *output_buffers;
+
+    /**
+     * <= CAMERA_DEVICE_API_VERISON_3_4:
+     *
+     *    Not defined and must not be accessed.
+     *
+     * >= CAMERA_DEVICE_API_VERSION_3_5:
+     *    The number of physical camera settings to be applied. If 'num_physcam_settings'
+     *    equals 0 or a physical device is not included, then Hal must decide the
+     *    specific physical device settings based on the default 'settings'.
+     */
+    uint32_t num_physcam_settings;
+
+    /**
+     * <= CAMERA_DEVICE_API_VERISON_3_4:
+     *
+     *    Not defined and must not be accessed.
+     *
+     * >= CAMERA_DEVICE_API_VERSION_3_5:
+     *    The physical camera ids. The array will contain 'num_physcam_settings'
+     *    camera id strings for all physical devices that have specific settings.
+     *    In case some id is invalid, the process capture request must fail and return
+     *    -EINVAL.
+     */
+    const char **physcam_id;
+
+    /**
+     * <= CAMERA_DEVICE_API_VERISON_3_4:
+     *
+     *    Not defined and must not be accessed.
+     *
+     * >= CAMERA_DEVICE_API_VERSION_3_5:
+     *    The capture settings for the physical cameras. The array will contain
+     *    'num_physcam_settings' settings for invididual physical devices. In
+     *    case the settings at some particular index are empty, the process capture
+     *    request must fail and return -EINVAL.
+     */
+    const camera_metadata_t **physcam_settings;
 
 } camera3_capture_request_t;
 
@@ -2350,6 +2672,37 @@ typedef struct camera3_capture_result {
       */
      uint32_t partial_result;
 
+     /**
+      * >= CAMERA_DEVICE_API_VERSION_3_5:
+      *
+      * Specifies the number of physical camera metadata this capture result
+      * contains. It must be equal to the number of physical cameras being
+      * requested from.
+      *
+      * If the current camera device is not a logical multi-camera, or the
+      * corresponding capture_request doesn't request on any physical camera,
+      * this field must be 0.
+      */
+     uint32_t num_physcam_metadata;
+
+     /**
+      * >= CAMERA_DEVICE_API_VERSION_3_5:
+      *
+      * An array of strings containing the physical camera ids for the returned
+      * physical camera metadata. The length of the array is
+      * num_physcam_metadata.
+      */
+     const char **physcam_ids;
+
+     /**
+      * >= CAMERA_DEVICE_API_VERSION_3_5:
+      *
+      * The array of physical camera metadata for the physical cameras being
+      * requested upon. This array should have a 1-to-1 mapping with the
+      * physcam_ids. The length of the array is num_physcam_metadata.
+      */
+     const camera_metadata_t **physcam_metadata;
+
 } camera3_capture_result_t;
 
 /**********************************************************************
@@ -2468,6 +2821,65 @@ typedef struct camera3_callback_ops {
      */
     void (*notify)(const struct camera3_callback_ops *,
             const camera3_notify_msg_t *msg);
+
+    /**
+     * request_stream_buffers:
+     *
+     * <= CAMERA_DEVICE_API_VERISON_3_5:
+     *
+     *    DO NOT USE: not defined and must be NULL.
+     *
+     * >= CAMERA_DEVICE_API_VERISON_3_6:
+     *
+     * Synchronous callback for HAL to ask for output buffer from camera service.
+     *
+     * This call may be serialized in camera service so it is strongly
+     * recommended to only call this method from one thread.
+     *
+     * When camera device advertises
+     * (android.info.supportedBufferManagementVersion ==
+     * ANDROID_INFO_SUPPORTED_BUFFER_MANAGEMENT_VERSION_HIDL_DEVICE_3_5), HAL
+     * can use this method to request buffers from camera service.
+     *
+     * Caller is responsible for allocating enough memory for returned_buf_reqs
+     * argument (num_buffer_reqs * sizeof(camera3_stream_buffer_ret_t)) bytes
+     * and also the memory for the output_buffers field in each
+     * camera3_stream_buffer_ret_t
+     * (num_buffers_requested * sizeof(camera3_stream_buffer_t)) bytes
+     *
+     * Performance requirements:
+     * This is a blocking call that takes more time with more buffers requested.
+     * HAL should not request large amount of buffers on a latency critical code
+     * path. It is highly recommended to use a dedicated thread to perform
+     * all requestStreamBuffer calls, and adjust the thread priority and/or
+     * timing of making the call in order for buffers to arrive before HAL is
+     * ready to fill the buffer.
+     */
+    camera3_buffer_request_status_t (*request_stream_buffers)(
+            const struct camera3_callback_ops *,
+            uint32_t num_buffer_reqs,
+            const camera3_buffer_request_t *buffer_reqs,
+            /*out*/uint32_t *num_returned_buf_reqs,
+            /*out*/camera3_stream_buffer_ret_t *returned_buf_reqs);
+
+    /**
+     * return_stream_buffers:
+     *
+     * <= CAMERA_DEVICE_API_VERISON_3_5:
+     *
+     *    DO NOT USE: not defined and must be NULL.
+     *
+     * >= CAMERA_DEVICE_API_VERISON_3_6:
+     *
+     * Synchronous callback for HAL to return output buffers to camera service.
+     *
+     * If this method is called during a configure_streams() call, it will be
+     * blocked until camera service finishes the ongoing configure_streams() call.
+     */
+    void (*return_stream_buffers)(
+            const struct camera3_callback_ops *,
+            uint32_t num_buffers,
+            const camera3_stream_buffer_t* const* buffers);
 
 } camera3_callback_ops_t;
 
@@ -2882,7 +3294,8 @@ typedef struct camera3_device_ops {
      *  0:      On a successful start to processing the capture request
      *
      * -EINVAL: If the input is malformed (the settings are NULL when not
-     *          allowed, there are 0 output buffers, etc) and capture processing
+     *          allowed, invalid physical camera settings,
+     *          there are 0 output buffers, etc) and capture processing
      *          cannot start. Failures during request processing should be
      *          handled by calling camera3_callback_ops_t.notify(). In case of
      *          this error, the framework will retain responsibility for the
@@ -3046,8 +3459,82 @@ typedef struct camera3_device_ops {
      */
     int (*flush)(const struct camera3_device *);
 
+    /**
+     * signal_stream_flush:
+     *
+     * <= CAMERA_DEVICE_API_VERISON_3_5:
+     *
+     *    Not defined and must be NULL
+     *
+     * >= CAMERA_DEVICE_API_VERISON_3_6:
+     *
+     * Signaling HAL camera service is about to perform configure_streams() call
+     * and HAL must return all buffers of designated streams. HAL must finish
+     * inflight requests normally and return all buffers belonging to the
+     * designated streams through process_capture_result() or
+     * return_stream_buffers() API in a timely manner, or camera service will run
+     * into a fatal error.
+     *
+     * Note that this call serves as an optional hint and camera service may
+     * skip calling this if all buffers are already returned.
+     *
+     */
+    void (*signal_stream_flush)(const struct camera3_device*,
+            uint32_t num_streams,
+            const camera3_stream_t* const* streams);
+
+    /**
+     * is_reconfiguration_required:
+     *
+     * <= CAMERA_DEVICE_API_VERISON_3_5:
+     *
+     *    Not defined and must be NULL
+     *
+     * >= CAMERA_DEVICE_API_VERISON_3_6:
+     *
+     * Check whether complete stream reconfiguration is required for possible new session
+     * parameter values.
+     *
+     * This method must be called by the camera framework in case the client changes
+     * the value of any advertised session parameters. Depending on the specific values
+     * the HAL can decide whether a complete stream reconfiguration is required. In case
+     * the HAL returns -ENVAL, the camera framework must skip the internal reconfiguration.
+     * In case Hal returns 0, the framework must reconfigure the streams and pass the
+     * new session parameter values accordingly.
+     * This call may be done by the framework some time before the request with new parameters
+     * is submitted to the HAL, and the request may be cancelled before it ever gets submitted.
+     * Therefore, the HAL must not use this query as an indication to change its behavior in any
+     * way.
+     * ------------------------------------------------------------------------
+     *
+     * Preconditions:
+     *
+     * The framework can call this method at any time after active
+     * session configuration. There must be no impact on the performance of
+     * pending camera requests in any way. In particular there must not be
+     * any glitches or delays during normal camera streaming.
+     *
+     * Performance requirements:
+     * HW and SW camera settings must not be changed and there must not be
+     * a user-visible impact on camera performance.
+     *
+     * @param oldSessionParams The currently applied session parameters.
+     * @param newSessionParams The new session parameters set by client.
+     *
+     * @return Status Status code for the operation, one of:
+     * 0:                    In case the stream reconfiguration is required
+     *
+     * -EINVAL:              In case the stream reconfiguration is not required.
+     *
+     * -ENOSYS:              In case the camera device does not support the
+     *                       reconfiguration query.
+     */
+    int (*is_reconfiguration_required)(const struct camera3_device*,
+            const camera_metadata_t* old_session_params,
+            const camera_metadata_t* new_session_params);
+
     /* reserved for future use */
-    void *reserved[8];
+    void *reserved[6];
 } camera3_device_ops_t;
 
 /**********************************************************************

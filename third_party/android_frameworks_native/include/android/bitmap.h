@@ -56,9 +56,9 @@ enum AndroidBitmapFormat {
     ANDROID_BITMAP_FORMAT_RGBA_8888 = 1,
     /** Red: 5 bits, Green: 6 bits, Blue: 5 bits. **/
     ANDROID_BITMAP_FORMAT_RGB_565   = 4,
-    /** Red: 4 bits, Green: 4 bits, Blue: 4 bits, Alpha: 4 bits. **/
+    /** Deprecated in API level 13. Because of the poor quality of this configuration, it is advised to use ARGB_8888 instead. **/
     ANDROID_BITMAP_FORMAT_RGBA_4444 = 7,
-    /** Deprecated. */
+    /** Alpha: 8 bits. */
     ANDROID_BITMAP_FORMAT_A_8       = 8,
 };
 
