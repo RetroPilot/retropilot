@@ -1,7 +1,0 @@
-{
-  "presubmit": [
-    {
-      "name": "librenderengine_test"
-    }
-  ]
-}

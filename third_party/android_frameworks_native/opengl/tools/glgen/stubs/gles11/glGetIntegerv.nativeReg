@@ -1,2 +1,0 @@
-{"glGetIntegerv", "(I[II)V", (void *) android_glGetIntegerv__I_3II },
-{"glGetIntegerv", "(ILjava/nio/IntBuffer;)V", (void *) android_glGetIntegerv__ILjava_nio_IntBuffer_2 },

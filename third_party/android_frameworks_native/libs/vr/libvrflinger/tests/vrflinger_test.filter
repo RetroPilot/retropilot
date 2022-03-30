@@ -1,5 +1,0 @@
-{
-        "presubmit": {
-            "filter": "BootVrFlingerTest.*"
-        }
-}

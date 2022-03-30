@@ -1,1 +1,0 @@
-{"glCreateShaderProgramv", "(I[Ljava/lang/String;)I", (void *) android_glCreateShaderProgramv },

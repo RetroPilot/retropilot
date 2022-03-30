@@ -1,5 +1,0 @@
-{
-        "presubmit": {
-            "filter": "CredentialsTest.*:SurfaceFlingerStress.*:SurfaceInterceptorTest.*:LayerTransactionTest.*:LayerTypeTransactionTest.*:LayerUpdateTest.*:GeometryLatchingTest.*:CropLatchingTest.*:ChildLayerTest.*:ScreenCaptureTest.*:ScreenCaptureChildOnlyTest.*:DereferenceSurfaceControlTest.*:BoundlessLayerTest.*:MultiDisplayLayerBoundsTest.*:InvalidHandleTest.*:VirtualDisplayTest.*:RelativeZTest.*"
-        }
-}

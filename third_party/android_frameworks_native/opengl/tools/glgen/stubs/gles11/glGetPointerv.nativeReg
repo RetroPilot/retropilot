@@ -1,1 +1,0 @@
-{"glGetPointerv", "(I)J", (void *) android_glGetPointerv },

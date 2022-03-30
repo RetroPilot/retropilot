@@ -1,4 +1,0 @@
-subdirs = [
-    "proto",
-    "replayer",
-]

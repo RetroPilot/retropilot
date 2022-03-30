@@ -1,1 +1,0 @@
-{"eglCreateImage", "(Landroid/opengl/EGLDisplay;Landroid/opengl/EGLContext;IJ[JI)Landroid/opengl/EGLImage;", (void *) android_eglCreateImage },

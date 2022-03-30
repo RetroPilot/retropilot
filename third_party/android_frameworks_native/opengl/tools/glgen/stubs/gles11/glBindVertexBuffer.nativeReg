@@ -1,1 +1,0 @@
-{"glBindVertexBuffer", "(IIJI)V", (void *) android_glBindVertexBuffer__IIJI },

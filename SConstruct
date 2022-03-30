@@ -89,7 +89,9 @@ if arch == "aarch64" or arch == "larch64":
     '#third_party/android10',
     '#third_party/libhidl/base/include',
     '#third_party/libhidl/transport/token/1.0/utils/include',
-    '#third_party/android10/bionic/libc/include'
+    '#third_party/android_system_core/include',
+    '#third_party/android_system_core/liblog'
+    #'#third_party/android10/bionic/libc/include'
   ]
 
   libpath = [

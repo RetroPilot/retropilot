@@ -1,4 +1,0 @@
-service nativeperms /system/bin/nativeperms
-    class main
-    user system
-    group system

@@ -1,2 +1,0 @@
-{"eglGetDisplay", "(I)Landroid/opengl/EGLDisplay;", (void *) android_eglGetDisplayInt },
-{"eglGetDisplay", "(J)Landroid/opengl/EGLDisplay;", (void *) android_eglGetDisplay },
