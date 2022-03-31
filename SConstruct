@@ -85,13 +85,7 @@ if arch == "aarch64" or arch == "larch64":
     lenv["ANDROID_ROOT"] = os.environ['ANDROID_ROOT']
 
   cpppath = [
-    "#third_party/opencl/include",
-    '#third_party/android10',
-    '#third_party/libhidl/base/include',
-    '#third_party/libhidl/transport/token/1.0/utils/include',
-    '#third_party/android_system_core/include',
-    '#third_party/android_system_core/liblog'
-    #'#third_party/android10/bionic/libc/include'
+    "#third_party/opencl/include"
   ]
 
   libpath = [
@@ -241,7 +235,14 @@ env = Environment(
     "#third_party/json11",
     "#third_party/curl/include",
     "#third_party/libgralloc/include",
-    *android_header_paths,
+    "#third_party/libhidl/base/include",
+    '#third_party/android10',
+    '#third_party/libhidl/transport/token/1.0/utils/include',
+    '#third_party/android_system_core/include',
+    '#third_party/android_system_core/liblog',
+    "#third_party/android_frameworks_native/include",
+    "#third_party/android_hardware_libhardware/include",
+    "#third_party/android_system_core/include",
     "#third_party/linux/include",
     "#third_party/snpe/include",
     "#third_party/mapbox-gl-native-qt/include",
