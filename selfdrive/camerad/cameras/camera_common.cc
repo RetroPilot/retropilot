@@ -20,7 +20,7 @@
 
 #ifdef QCOM
 #include "CL/cl_ext_qcom.h"
-#include "selfdrive/camerad/cameras/camera_qcom.h"
+#include "selfdrive/camerad/cameras/camera_android.h"
 #elif QCOM2
 #include "CL/cl_ext_qcom.h"
 #include "selfdrive/camerad/cameras/camera_qcom2.h"

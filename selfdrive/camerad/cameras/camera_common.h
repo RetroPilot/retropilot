@@ -25,7 +25,9 @@
 #define CAMERA_ID_LGC920 6
 #define CAMERA_ID_LGC615 7
 #define CAMERA_ID_AR0231 8
-#define CAMERA_ID_MAX 9
+#define CAMERA_ID_IMX363 9   // pixel 3 rear camera
+#define CAMERA_ID_IMX355 10  // pixel 3 front cameras
+#define CAMERA_ID_MAX 11
 
 const int UI_BUF_COUNT = 4;
 const int YUV_BUFFER_COUNT = Hardware::EON() ? 100 : 40;
