@@ -374,6 +374,8 @@ selfdrive/camerad/main.cc
 
 selfdrive/camerad/snapshot/*
 selfdrive/camerad/include/*
+selfdrive/camerad/cameras/camera_android.cc
+selfdrive/camerad/cameras/camera_android.h
 selfdrive/camerad/cameras/camera_common.h
 selfdrive/camerad/cameras/camera_common.cc
 selfdrive/camerad/cameras/camera_qcom.cc

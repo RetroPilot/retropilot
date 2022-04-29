@@ -61,23 +61,24 @@ void camera_init(VisionIpcServer * v, CameraState *s, int camera_id, unsigned in
 }
 
 void run_camera(CameraState *s, float *ts) {
-  cv::Size size(s->ci.frame_width, s->ci.frame_height);
-  const cv::Mat transform = cv::Mat(3, 3, CV_32F, ts);
+// void run_camera(CameraState *s, cv::VideoCapture &video_cap, float *ts) {
+  // cv::Size size(s->ci.frame_width, s->ci.frame_height);
+  // const cv::Mat transform = cv::Mat(3, 3, CV_32F, ts);
   uint32_t frame_id = 0;
   size_t buf_idx = 0;
 
   while (!do_exit) {
-    cv::Mat frame_mat, transformed_mat;
-    video_cap >> frame_mat;
-    if (frame_mat.empty()) continue;
+    // cv::Mat frame_mat, transformed_mat;
+    // video_cap >> frame_mat;
+    // if (frame_mat.empty()) continue;
 
-    cv::warpPerspective(frame_mat, transformed_mat, transform, size, cv::INTER_LINEAR, cv::BORDER_CONSTANT, 0);
+    // cv::warpPerspective(frame_mat, transformed_mat, transform, size, cv::INTER_LINEAR, cv::BORDER_CONSTANT, 0);
 
     s->buf.camera_bufs_metadata[buf_idx] = {.frame_id = frame_id};
 
     auto &buf = s->buf.camera_bufs[buf_idx];
-    int transformed_size = transformed_mat.total() * transformed_mat.elemSize();
-    CL_CHECK(clEnqueueWriteBuffer(buf.copy_q, buf.buf_cl, CL_TRUE, 0, transformed_size, transformed_mat.data, 0, NULL, NULL));
+    // int transformed_size = transformed_mat.total() * transformed_mat.elemSize();
+    // CL_CHECK(clEnqueueWriteBuffer(buf.copy_q, buf.buf_cl, CL_TRUE, 0, transformed_size, transformed_mat.data, 0, NULL, NULL));
 
     s->buf.queue(buf_idx);
 
@@ -86,35 +87,35 @@ void run_camera(CameraState *s, float *ts) {
   }
 }
 
-// static void road_camera_thread(CameraState *s) {
-//   util::set_thread_name("webcam_road_camera_thread");
+static void road_camera_thread(CameraState *s) {
+  util::set_thread_name("android_road_camera_thread");
 
-//   cv::VideoCapture cap_road(ROAD_CAMERA_ID, cv::CAP_V4L2); // road
-//   cap_road.set(cv::CAP_PROP_FRAME_WIDTH, 853);
-//   cap_road.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
-//   cap_road.set(cv::CAP_PROP_FPS, s->fps);
-//   cap_road.set(cv::CAP_PROP_AUTOFOCUS, 0); // off
-//   cap_road.set(cv::CAP_PROP_FOCUS, 0); // 0 - 255?
-//   // cv::Rect roi_rear(160, 0, 960, 720);
+  // cv::VideoCapture cap_road(ROAD_CAMERA_ID, cv::CAP_V4L2); // road
+  // cap_road.set(cv::CAP_PROP_FRAME_WIDTH, 853);
+  // cap_road.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
+  // cap_road.set(cv::CAP_PROP_FPS, s->fps);
+  // cap_road.set(cv::CAP_PROP_AUTOFOCUS, 0); // off
+  // cap_road.set(cv::CAP_PROP_FOCUS, 0); // 0 - 255?
+  // // cv::Rect roi_rear(160, 0, 960, 720);
 
-//   // transforms calculation see tools/webcam/warp_vis.py
-//   float ts[9] = {1.50330396, 0.0, -59.40969163,
-//                   0.0, 1.50330396, 76.20704846,
-//                   0.0, 0.0, 1.0};
-//   // if camera upside down:
-//   // float ts[9] = {-1.50330396, 0.0, 1223.4,
-//   //                 0.0, -1.50330396, 797.8,
-//   //                 0.0, 0.0, 1.0};
+  // transforms calculation see tools/webcam/warp_vis.py
+  float ts[9] = {1.50330396, 0.0, -59.40969163,
+                  0.0, 1.50330396, 76.20704846,
+                  0.0, 0.0, 1.0};
+  // if camera upside down:
+  // float ts[9] = {-1.50330396, 0.0, 1223.4,
+  //                 0.0, -1.50330396, 797.8,
+  //                 0.0, 0.0, 1.0};
 
-//   run_camera(s, cap_road, ts);
-// }
+  run_camera(s, cap_road, ts);
+}
 
 void driver_camera_thread(CameraState *s) {
-  cv::VideoCapture cap_driver(DRIVER_CAMERA_ID, cv::CAP_V4L2); // driver
-  cap_driver.set(cv::CAP_PROP_FRAME_WIDTH, 853);
-  cap_driver.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
-  cap_driver.set(cv::CAP_PROP_FPS, s->fps);
-  // cv::Rect roi_front(320, 0, 960, 720);
+  // cv::VideoCapture cap_driver(DRIVER_CAMERA_ID, cv::CAP_V4L2); // driver
+  // cap_driver.set(cv::CAP_PROP_FRAME_WIDTH, 853);
+  // cap_driver.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
+  // cap_driver.set(cv::CAP_PROP_FPS, s->fps);
+  // // cv::Rect roi_front(320, 0, 960, 720);
 
   // transforms calculation see tools/webcam/warp_vis.py
   float ts[9] = {1.42070485, 0.0, -30.16740088,
@@ -130,8 +131,8 @@ void driver_camera_thread(CameraState *s) {
 }  // namespace
 
 void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_id, cl_context ctx) {
-  // camera_init(v, &s->road_cam, CAMERA_ID_, 20, device_id, ctx,
-  //             VISION_STREAM_RGB_ROAD, VISION_STREAM_ROAD);
+  camera_init(v, &s->road_cam, ROAD_CAMERA_ID, 20, device_id, ctx,
+              VISION_STREAM_RGB_ROAD, VISION_STREAM_ROAD);
   camera_init(v, &s->driver_cam, DRIVER_CAMERA_ID, 10, device_id, ctx,
               VISION_STREAM_RGB_DRIVER, VISION_STREAM_DRIVER);
   s->pm = new PubMaster({"roadCameraState", "driverCameraState", "thumbnail"});
@@ -140,14 +141,14 @@ void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_i
 void camera_autoexposure(CameraState *s, float grey_frac) {}
 
 void cameras_open(MultiCameraState *s) {
-  // LOG("*** open driver camera ***");
+  LOG("*** open driver camera ***");
   camera_open(&s->driver_cam);
-  // LOG("*** open road camera ***");
-  // camera_open(&s->road_cam);
+  LOG("*** open road camera ***");
+  camera_open(&s->road_cam);
 }
 
 void cameras_close(MultiCameraState *s) {
-  // camera_close(&s->road_cam);
+  camera_close(&s->road_cam);
   camera_close(&s->driver_cam);
   delete s->pm;
 }
@@ -160,29 +161,29 @@ void process_driver_camera(MultiCameraState *s, CameraState *c, int cnt) {
   s->pm->send("driverCameraState", msg);
 }
 
-// void process_road_camera(MultiCameraState *s, CameraState *c, int cnt) {
-//   const CameraBuf *b = &c->buf;
-//   MessageBuilder msg;
-//   auto framed = msg.initEvent().initRoadCameraState();
-//   fill_frame_data(framed, b->cur_frame_data);
-//   framed.setImage(kj::arrayPtr((const uint8_t *)b->cur_yuv_buf->addr, b->cur_yuv_buf->len));
-//   framed.setTransform(b->yuv_transform.v);
-//   s->pm->send("roadCameraState", msg);
-// }
+void process_road_camera(MultiCameraState *s, CameraState *c, int cnt) {
+  const CameraBuf *b = &c->buf;
+  MessageBuilder msg;
+  auto framed = msg.initEvent().initRoadCameraState();
+  fill_frame_data(framed, b->cur_frame_data);
+  framed.setImage(kj::arrayPtr((const uint8_t *)b->cur_yuv_buf->addr, b->cur_yuv_buf->len));
+  framed.setTransform(b->yuv_transform.v);
+  s->pm->send("roadCameraState", msg);
+}
 
 void cameras_run(MultiCameraState *s) {
   LOG("-- Starting threads");
   std::vector<std::thread> threads;
+  threads.push_back(start_process_thread(s, &s->road_cam, process_road_camera));
   threads.push_back(start_process_thread(s, &s->driver_cam, process_driver_camera));
-  if (!env_only_driver) {
-    // threads.push_back(start_process_thread(s, &s->road_cam, process_road_camera));
-  }
 
-  // std::thread t_rear = std::thread(road_camera_thread, &s->road_cam);
-  util::set_thread_name("webcam_thread");
+  std::thread t_rear = std::thread(road_camera_thread, &s->road_cam);
+  util::set_thread_name("android_thread");
   driver_camera_thread(&s->driver_cam);
 
   LOG(" ************** STOPPING **************");
+
+  t_rear.join();
 
   for (auto &t : threads) t.join();
 

@@ -185,7 +185,7 @@ android_header_paths = [
 ]
 if arch == "aarch64" and android_version == "9":
   cflags += ["-DANDROID_9"]
-  cxxflags += ["-DANDROID_9"]
+  cxxflags += ["-DANDROID_9", "-D__ANDROID_API__=28"]
   android_header_paths = [
     "#third_party/android_headers_9/android_system_core/libsystem/include",
     "#third_party/android_headers_9/android_system_core/libutils/include",
