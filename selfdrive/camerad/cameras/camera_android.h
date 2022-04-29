@@ -7,7 +7,6 @@
 #include <camera/NdkCameraManager.h>
 #include <camera/NdkCameraMetadata.h>
 #include <camera/NdkCameraMetadataTags.h>
-#include <camera/NdkCameraWindowType.h>
 #include <camera/NdkCaptureRequest.h>
 #include <media/NdkImageReader.h>
 

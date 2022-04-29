@@ -132,7 +132,7 @@ void driver_camera_thread(CameraState *s) {
 void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_id, cl_context ctx) {
   // camera_init(v, &s->road_cam, CAMERA_ID_, 20, device_id, ctx,
   //             VISION_STREAM_RGB_ROAD, VISION_STREAM_ROAD);
-  camera_init(v, &s->driver_cam, CAMERA_ID, 10, device_id, ctx,
+  camera_init(v, &s->driver_cam, DRIVER_CAMERA_ID, 10, device_id, ctx,
               VISION_STREAM_RGB_DRIVER, VISION_STREAM_DRIVER);
   s->pm = new PubMaster({"roadCameraState", "driverCameraState", "thumbnail"});
 }
