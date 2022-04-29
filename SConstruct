@@ -203,6 +203,7 @@ if arch == "aarch64" and android_version == "9":
     "#third_party/android_headers_9/android_frameworks_native/libs/binder/include",
     "#third_party/android_headers_9/android_frameworks_native/libs/ui/include",
     "#third_party/android_headers_9/android_frameworks_native/libs/gui/include",
+    "#third_party/android_headers_9/android_frameworks_av/include",
   ]
 
 env = Environment(
