@@ -43,7 +43,10 @@ CameraInfo cameras_supported[CAMERA_ID_MAX] = {
 };
 
 void camera_open(CameraState *s) {
-  // empty
+  camera_status_t camera_status = ACAMERA_OK;
+
+  ACaptureSessionOutputContainer_create(&s->capture_session_output_container);
+
 }
 
 void camera_close(CameraState *s) {
