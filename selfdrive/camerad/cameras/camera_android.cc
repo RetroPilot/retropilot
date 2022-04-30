@@ -47,7 +47,33 @@ void camera_open(CameraState *s) {
 }
 
 void camera_close(CameraState *s) {
-  // empty
+  if (s->capture_request) {
+    ACaptureRequest_free(s->capture_request);
+    s->capture_request = NULL;
+  }
+
+  if (s->camera_output_target) {
+    ACameraOutputTarget_free(s->camera_output_target);
+    s->camera_output_target = NULL;
+  }
+
+  if (s->camera_device) {
+    ACameraDevice_close(s->camera_device);
+    s->camera_device = NULL;
+  }
+
+  if (s->capture_session_output_container) {
+    if (s->capture_session_output) {
+      ACaptureSessionOutputContainer_remove(s->capture_session_output_container,
+                                            s->capture_session_output);
+
+      ACaptureSessionOutput_free(s->capture_session_output);
+      s->capture_session_output = NULL;
+    }
+
+    ACaptureSessionOutputContainer_free(s->capture_session_output_container);
+    s->capture_session_output_container = NULL;
+  }
 }
 
 void camera_init(VisionIpcServer *v, CameraState *s, int camera_id, unsigned int fps, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type) {
