@@ -185,8 +185,10 @@ void driver_camera_thread(CameraState *s) {
 }  // namespace
 
 void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_id, cl_context ctx) {
+  LOG("*** init road camera ***");
   camera_init(v, &s->road_cam, ROAD_CAMERA_ID, 20, device_id, ctx,
               VISION_STREAM_RGB_ROAD, VISION_STREAM_ROAD);
+  LOG("*** init driver camera ***");
   camera_init(v, &s->driver_cam, DRIVER_CAMERA_ID, 10, device_id, ctx,
               VISION_STREAM_RGB_DRIVER, VISION_STREAM_DRIVER);
   s->pm = new PubMaster({"roadCameraState", "driverCameraState", "thumbnail"});
@@ -195,14 +197,16 @@ void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_i
 void camera_autoexposure(CameraState *s, float grey_frac) {}
 
 void cameras_open(MultiCameraState *s) {
-  LOG("*** open driver camera ***");
-  camera_open(&s->driver_cam);
   LOG("*** open road camera ***");
   camera_open(&s->road_cam);
+  LOG("*** open driver camera ***");
+  camera_open(&s->driver_cam);
 }
 
 void cameras_close(MultiCameraState *s) {
+  LOG("*** close road camera ***");
   camera_close(&s->road_cam);
+  LOG("*** close driver camera ***");
   camera_close(&s->driver_cam);
   delete s->pm;
 }
