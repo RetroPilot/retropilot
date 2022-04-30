@@ -37,6 +37,8 @@ static void CaptureSessionOnActive(void* context, ACameraCaptureSession* session
 
 
 typedef struct CameraState {
+  MultiCameraState *multi_camera_state;
+
   CameraInfo ci;
   int camera_num;
   int fps;
@@ -56,10 +58,14 @@ typedef struct CameraState {
   int32_t camera_orientation;
   // android camera id
   const char *camera_id;
+
+  ImageReader *image_reader;
 } CameraState;
 
 
 typedef struct MultiCameraState {
+  ACameraManager *camera_manager;
+
   CameraState road_cam;
   CameraState driver_cam;
 

@@ -9,6 +9,7 @@
 #include "selfdrive/common/swaglog.h"
 #include "selfdrive/common/timing.h"
 #include "selfdrive/common/util.h"
+#include "selfdrive/camerad/cameras/android/image_reader.h"
 
 // id of the video capturing device
 const int ROAD_CAMERA_ID = util::getenv("ROADCAM_ID", 1);
@@ -43,10 +44,30 @@ CameraInfo cameras_supported[CAMERA_ID_MAX] = {
 };
 
 void camera_open(CameraState *s) {
-  camera_status_t camera_status = ACAMERA_OK;
+  ACameraManager *camera_manager = s->multi_camera_state->camera_manager;
 
-  ACaptureSessionOutputContainer_create(&s->capture_session_output_container);
+  // ** open camera **
+  camera_status_t camera_status = ACameraManager_openCamera(camera_manager, s->camera_id,
+                                            &s->device_state_callbacks, &s->camera_device);
+  assert(camera_status == ACAMERA_OK); // failed to open camera
 
+  // ** set up capture session **
+
+  // ** create capture session output container **
+  // ACaptureSessionOutputContainer_create(&s->capture_session_output_container);
+  // ACaptureSessionOutput_create()
+
+  camera_status = ACameraDevice_createCaptureRequest(s->camera_device,
+                                                     TEMPLATE_RECORD, &s->capture_request);
+  assert(camera_status == ACAMERA_OK); // failed to create preview capture request
+
+  s->capture_session_state_callbacks.onReady = &CaptureSessionOnReady;
+  s->capture_session_state_callbacks.onActive = &CaptureSessionOnActive;
+  ACameraDevice_createCaptureSession(s->camera_device, s->capture_session_output_container,
+                                     &s->capture_session_state_callbacks, &s->capture_session);
+
+  ACameraCaptureSession_setRepeatingRequest(s->capture_session, NULL, 1,
+                                            &s->capture_request, NULL);
 }
 
 void camera_close(CameraState *s) {
@@ -88,8 +109,7 @@ void camera_init(VisionIpcServer *v, CameraState *s, int camera_id, unsigned int
   s->fps = fps;
   s->buf.init(device_id, ctx, s, v, FRAME_BUF_COUNT, rgb_type, yuv_type);
 
-  // TODO re-use camera manager
-  ACameraManager *camera_manager = ACameraManager_create();
+  ACameraManager *camera_manager = s->multi_camera_state->camera_manager;
 
   // ** get camera list **
   ACameraIdList *camera_id_list = NULL;
@@ -111,10 +131,9 @@ void camera_init(VisionIpcServer *v, CameraState *s, int camera_id, unsigned int
   s->device_state_callbacks.onDisconnected = CameraDeviceOnDisconnected;
   s->device_state_callbacks.onError = CameraDeviceOnError;
 
-  // ** open camera **
-  camera_status = ACameraManager_openCamera(camera_manager, s->camera_id,
-                                            &s->device_state_callbacks, &s->camera_device);
-  assert(camera_status == ACAMERA_OK); // failed to open camera
+  // ** create image reader **
+  ImageFormat image_format{0, 0};
+  s->image_reader = new ImageReader(&image_format, AIMAGE_FORMAT_YUV_420_888);
 }
 
 void run_camera(CameraState *s, float *ts) {
@@ -188,12 +207,15 @@ void driver_camera_thread(CameraState *s) {
 }  // namespace
 
 void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_id, cl_context ctx) {
+  s->camera_manager = ACameraManager_create();
+
   LOG("*** init road camera ***");
   camera_init(v, &s->road_cam, ROAD_CAMERA_ID, 20, device_id, ctx,
               VISION_STREAM_RGB_ROAD, VISION_STREAM_ROAD);
   LOG("*** init driver camera ***");
   camera_init(v, &s->driver_cam, DRIVER_CAMERA_ID, 10, device_id, ctx,
               VISION_STREAM_RGB_DRIVER, VISION_STREAM_DRIVER);
+
   s->pm = new PubMaster({"roadCameraState", "driverCameraState", "thumbnail"});
 }
 
