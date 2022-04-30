@@ -50,7 +50,7 @@ void camera_close(CameraState *s) {
   // empty
 }
 
-void camera_init(VisionIpcServer * v, CameraState *s, int camera_id, unsigned int fps, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type) {
+void camera_init(VisionIpcServer *v, CameraState *s, int camera_id, unsigned int fps, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type) {
   assert(camera_id < std::size(cameras_supported));
   s->ci = cameras_supported[camera_id];
   assert(s->ci.frame_width != 0);
@@ -58,6 +58,34 @@ void camera_init(VisionIpcServer * v, CameraState *s, int camera_id, unsigned in
   s->camera_num = camera_id;
   s->fps = fps;
   s->buf.init(device_id, ctx, s, v, FRAME_BUF_COUNT, rgb_type, yuv_type);
+
+  // TODO re-use camera manager
+  ACameraManager *camera_manager = ACameraManager_create();
+
+  // ** get camera list **
+  ACameraIdList *camera_id_list = NULL;
+  camera_status_t camera_status = ACameraManager_getCameraIdList(camera_manager, &camera_id_list);
+  assert(camera_status == ACAMERA_OK); // failed to get camera id list
+
+  // ** set (android) camera id **
+  s->camera_id = camera_id_list->cameraIds[camera_id];
+
+  // ASSUMPTION: IXM363 (road) is index[0] and IMX355 (driver) is index[1]
+  // TODO: check that we actually need to rotate
+  if (camera_id == CAMERA_ID_IMX363) {
+    s->camera_orientation = 90;
+  } else if (camera_id == CAMERA_ID_IMX355) {
+    s->camera_orientation = 270;
+  }
+
+  // ** setup callbacks **
+  s->device_state_callbacks.onDisconnected = CameraDeviceOnDisconnected;
+  s->device_state_callbacks.onError = CameraDeviceOnError;
+
+  // ** open camera **
+  camera_status = ACameraManager_openCamera(camera_manager, s->camera_id,
+                                            &s->device_state_callbacks, &s->camera_device);
+  assert(camera_status == ACAMERA_OK); // failed to open camera
 }
 
 void run_camera(CameraState *s, float *ts) {

@@ -51,11 +51,9 @@ typedef struct CameraState {
   ACameraDevice_StateCallbacks device_state_callbacks;
   ACameraCaptureSession_stateCallbacks capture_session_state_callbacks;
 
-  ACameraManager *camera_manager;
   int32_t camera_orientation;
-  ACameraIdList *camera_id_list;
+  // android camera id
   const char *camera_id;
-  bool camera_ready;
 } CameraState;
 
 
