@@ -1,16 +1,5 @@
 #include "selfdrive/camerad/cameras/camera_android.h"
 
-#include <unistd.h>
-
-#include <cassert>
-#include <cstring>
-
-#include "selfdrive/common/clutil.h"
-#include "selfdrive/common/swaglog.h"
-#include "selfdrive/common/timing.h"
-#include "selfdrive/common/util.h"
-#include "selfdrive/camerad/cameras/android/image_reader.h"
-
 // id of the video capturing device
 const int ROAD_CAMERA_ID = util::getenv("ROADCAM_ID", 1);
 const int DRIVER_CAMERA_ID = util::getenv("DRIVERCAM_ID", 2);

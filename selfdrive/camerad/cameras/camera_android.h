@@ -10,8 +10,15 @@
 #include <camera/NdkCaptureRequest.h>
 #include <media/NdkImageReader.h>
 
+#include <unistd.h>
+
+#include <cassert>
 #include <cstring>
 
+#include "selfdrive/common/clutil.h"
+#include "selfdrive/common/swaglog.h"
+#include "selfdrive/common/timing.h"
+#include "selfdrive/common/util.h"
 #include "selfdrive/camerad/cameras/camera_common.h"
 #include "selfdrive/camerad/cameras/android/image_reader.h"
 
