@@ -158,10 +158,6 @@ void run_camera(CameraState *s, float *ts) {
   size_t buf_idx = 0;
 
   while (!do_exit) {
-    // cv::Mat frame_mat, transformed_mat;
-    // video_cap >> frame_mat;
-    // if (frame_mat.empty()) continue;
-
     // ** get image **
     AImage *image = s->image_reader->GetLatestImage();
     if (image == NULL) continue;
@@ -181,13 +177,13 @@ void run_camera(CameraState *s, float *ts) {
 
     // ** copy image data to cl buffer **
 
-    int32_t width = 0, height = 0;
-    AImage_getWidth(image, &width);
-    AImage_getHeight(image, &height);
+    uint8_t *data = NULL;
+    int size = 0;
+    media_status_t status = AImage_getPlaneData(image, 0, &data, &size);
+    assert(status == AMEDIA_OK);  // failed to get image data
 
     auto &buf = s->buf.camera_bufs[buf_idx];
-    int transformed_size = transformed_mat.total() * transformed_mat.elemSize();
-    CL_CHECK(clEnqueueWriteBuffer(buf.copy_q, buf.buf_cl, CL_TRUE, 0, transformed_size, transformed_mat.data, 0, NULL, NULL));
+    CL_CHECK(clEnqueueWriteBuffer(buf.copy_q, buf.buf_cl, CL_TRUE, 0, size, data, 0, NULL, NULL));
 
     s->buf.queue(buf_idx);
 
