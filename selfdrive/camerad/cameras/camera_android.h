@@ -17,25 +17,6 @@
 
 #define FRAME_BUF_COUNT 16
 
-// Camera Callbacks
-static void CameraDeviceOnDisconnected(void* context, ACameraDevice* device) {
-  LOG("Camera(id: %s) is diconnected.\n", ACameraDevice_getId(device));
-}
-
-static void CameraDeviceOnError(void* context, ACameraDevice* device, int error) {
-  LOGE("Error(code: %d) on Camera(id: %s).\n", error, ACameraDevice_getId(device));
-}
-
-// Capture Callbacks
-static void CaptureSessionOnReady(void* context, ACameraCaptureSession* session) {
-  LOG("Session is ready.\n");
-}
-
-static void CaptureSessionOnActive(void* context, ACameraCaptureSession* session) {
-  LOG("Session is active.\n");
-}
-
-
 typedef struct CameraState {
   MultiCameraState *multi_camera_state;
 
@@ -73,3 +54,22 @@ typedef struct MultiCameraState {
   SubMaster *sm;
   PubMaster *pm;
 } MultiCameraState;
+
+
+// Camera Callbacks
+static void CameraDeviceOnDisconnected(void* context, ACameraDevice* device) {
+  LOG("Camera(id: %s) is diconnected.\n", ACameraDevice_getId(device));
+}
+
+static void CameraDeviceOnError(void* context, ACameraDevice* device, int error) {
+  LOGE("Error(code: %d) on Camera(id: %s).\n", error, ACameraDevice_getId(device));
+}
+
+// Capture Callbacks
+static void CaptureSessionOnReady(void* context, ACameraCaptureSession* session) {
+  LOG("Session is ready.\n");
+}
+
+static void CaptureSessionOnActive(void* context, ACameraCaptureSession* session) {
+  LOG("Session is active.\n");
+}
