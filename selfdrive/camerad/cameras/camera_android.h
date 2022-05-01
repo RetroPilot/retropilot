@@ -51,11 +51,7 @@ public:
   ImageReader *image_reader;
 
 public:
-  explicit CameraState(int camera_num, unsigned int fps) : camera_num(camera_num), fps(fps) {
-    assert(camera_num < std::size(cameras_supported));
-    ci = cameras_supported[camera_num];
-    assert(ci.frame_width != 0);
-  }
+  explicit CameraState(int camera_num, unsigned int fps);
 
   void camera_init(VisionIpcServer *v, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type);
   void camera_open();

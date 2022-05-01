@@ -30,6 +30,12 @@ CameraInfo cameras_supported[CAMERA_ID_MAX] = {
   },
 };
 
+CameraState::CameraState(int camera_num, unsigned int fps) : camera_num(camera_num), fps(fps) {
+  assert(camera_num < std::size(cameras_supported));
+  ci = cameras_supported[camera_num];
+  assert(ci.frame_width != 0);
+}
+
 void CameraState::camera_init(VisionIpcServer *v, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type) {
   // ** initialise camera buffer **
   buf.init(device_id, ctx, this, v, FRAME_BUF_COUNT, rgb_type, yuv_type);
