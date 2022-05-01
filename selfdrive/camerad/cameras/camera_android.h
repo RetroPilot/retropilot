@@ -24,7 +24,8 @@
 
 #define FRAME_BUF_COUNT 16
 
-typedef struct CameraState {
+class CameraState {
+public:
   MultiCameraState *multi_camera_state;
 
   CameraInfo ci;
@@ -49,7 +50,23 @@ typedef struct CameraState {
 
   ImageFormat image_format{0, 0};
   ImageReader *image_reader;
-} CameraState;
+
+  void Init(VisionIpcServer *v, int camera_id, unsigned int fps, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type);
+
+  void Open();
+
+  void Run(float *ts);
+
+  void Close();
+
+  // ** Camera Callbacks **
+  static void CameraDeviceOnDisconnected(void *context, ACameraDevice *device);
+  static void CameraDeviceOnError(void *context, ACameraDevice *device, int error);
+
+  // ** Capture Callbacks **
+  static void CaptureSessionOnReady(void *context, ACameraCaptureSession *session);
+  static void CaptureSessionOnActive(void *context, ACameraCaptureSession *session);
+};
 
 
 typedef struct MultiCameraState {
@@ -61,22 +78,3 @@ typedef struct MultiCameraState {
   SubMaster *sm;
   PubMaster *pm;
 } MultiCameraState;
-
-
-// Camera Callbacks
-static void CameraDeviceOnDisconnected(void* context, ACameraDevice* device) {
-  LOG("Camera(id: %s) is diconnected.\n", ACameraDevice_getId(device));
-}
-
-static void CameraDeviceOnError(void* context, ACameraDevice* device, int error) {
-  LOGE("Error(code: %d) on Camera(id: %s).\n", error, ACameraDevice_getId(device));
-}
-
-// Capture Callbacks
-static void CaptureSessionOnReady(void* context, ACameraCaptureSession* session) {
-  LOG("Session is ready.\n");
-}
-
-static void CaptureSessionOnActive(void* context, ACameraCaptureSession* session) {
-  LOG("Session is active.\n");
-}
