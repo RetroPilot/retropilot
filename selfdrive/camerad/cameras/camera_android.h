@@ -29,9 +29,12 @@ public:
   MultiCameraState *multi_camera_state;
 
   CameraInfo ci;
+  int camera_num;
+  unsigned int fps;
   float digital_gain;
   CameraBuf buf;
 
+private:
   ACameraDevice *camera_device;
   ACaptureRequest *capture_request;
   ACameraOutputTarget *camera_output_target;
@@ -43,15 +46,10 @@ public:
   ACameraCaptureSession_stateCallbacks capture_session_state_callbacks;
 
   int32_t camera_orientation;
-  // android camera id
   const char *camera_id;
 
   ImageFormat image_format{0, 0};
   ImageReader *image_reader;
-
-private:
-  int camera_num_;
-  unsigned int fps_;
 
 public:
   void camera_init(VisionIpcServer *v, int camera_num, unsigned int fps, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type);
