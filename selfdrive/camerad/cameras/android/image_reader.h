@@ -32,6 +32,8 @@ public:
 
   ~ImageReader();
 
+  ANativeWindow *GetNativeWindow();
+
   AImage *GetLatestImage();
 
   void DeleteImage(AImage *image);

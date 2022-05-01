@@ -26,12 +26,23 @@ ImageReader::ImageReader(ImageFormat *res, enum AIMAGE_FORMATS format)
 }
 
 ImageReader::~ImageReader() {
-  assert(reader_);
-  AImageReader_delete(reader_);
+  if (reader_) {
+    AImageReader_delete(reader_);
+  }
 
   if (image_buffer_) {
     free(image_buffer_);
   }
+}
+
+ANativeWindow *ImageReader::GetNativeWindow() {
+  assert(reader_);
+
+  ANativeWindow *native_window;
+  media_status_t status = AImageReader_getWindow(reader_, &native_window);
+  assert(status == AMEDIA_OK); // failed to get native window
+
+  return native_window;
 }
 
 void ImageReader::ImageCallback(AImageReader *reader) {
