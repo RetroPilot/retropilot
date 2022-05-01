@@ -153,8 +153,8 @@ void run_camera(CameraState *s, float *ts) {
     s->buf.camera_bufs_metadata[buf_idx] = {.frame_id = frame_id};
 
     auto &buf = s->buf.camera_bufs[buf_idx];
-    // int transformed_size = transformed_mat.total() * transformed_mat.elemSize();
-    // CL_CHECK(clEnqueueWriteBuffer(buf.copy_q, buf.buf_cl, CL_TRUE, 0, transformed_size, transformed_mat.data, 0, NULL, NULL));
+    int transformed_size = transformed_mat.total() * transformed_mat.elemSize();
+    CL_CHECK(clEnqueueWriteBuffer(buf.copy_q, buf.buf_cl, CL_TRUE, 0, transformed_size, transformed_mat.data, 0, NULL, NULL));
 
     s->buf.queue(buf_idx);
 
