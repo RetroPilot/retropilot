@@ -52,9 +52,7 @@ public:
   ImageReader *image_reader;
 
 public:
-  explicit CameraState(int camera_num, unsigned int fps);
-
-  void camera_init(VisionIpcServer *v, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type);
+  void camera_init(VisionIpcServer *v, int camera_num, unsigned int fps, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type);
   void camera_open();
   void camera_run(float *ts);
   void camera_close();
@@ -73,8 +71,8 @@ private:
 typedef struct MultiCameraState {
   ACameraManager *camera_manager;
 
-  CameraState *road_cam;
-  CameraState *driver_cam;
+  CameraState road_cam;
+  CameraState driver_cam;
 
   SubMaster *sm;
   PubMaster *pm;

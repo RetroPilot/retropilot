@@ -30,13 +30,20 @@ CameraInfo cameras_supported[CAMERA_ID_MAX] = {
   },
 };
 
-CameraState::CameraState(int camera_num, unsigned int fps) : camera_num(camera_num), fps(fps) {
-  assert(camera_num < std::size(cameras_supported));
-  ci = cameras_supported[camera_num];
-  assert(ci.frame_width != 0);
+CameraState::CameraState() : camera_num(camera_num), fps(fps) {
+
+
 }
 
-void CameraState::camera_init(VisionIpcServer *v, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type) {
+void CameraState::camera_init(VisionIpcServer *v, int camera_num, unsigned int fps, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type) {
+  assert(camera_num < std::size(cameras_supported));
+  this->camera_num = camera_num;
+
+  ci = cameras_supported[camera_num];
+  assert(ci.frame_width != 0);
+
+  this->fps = fps;
+
   // ** initialise camera buffer **
   buf.init(device_id, ctx, this, v, FRAME_BUF_COUNT, rgb_type, yuv_type);
 
@@ -198,13 +205,11 @@ void driver_camera_thread(CameraState *s) {
 
 void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_id, cl_context ctx) {
   s->camera_manager = ACameraManager_create();
-  s->road_cam = new CameraState(ROAD_CAMERA_ID, 20);
-  s->driver_cam = new CameraState(DRIVER_CAMERA_ID, 10);
 
   LOG("*** init road camera ***");
-  s->road_cam->camera_init(v, device_id, ctx, VISION_STREAM_RGB_ROAD, VISION_STREAM_ROAD);
+  s->road_cam.camera_init(v, ROAD_CAMERA_ID, 20, device_id, ctx, VISION_STREAM_RGB_ROAD, VISION_STREAM_ROAD);
   LOG("*** init driver camera ***");
-  s->driver_cam->camera_init(v, device_id, ctx, VISION_STREAM_RGB_DRIVER, VISION_STREAM_DRIVER);
+  s->driver_cam.camera_init(v, DRIVER_CAMERA_ID, 10, device_id, ctx, VISION_STREAM_RGB_DRIVER, VISION_STREAM_DRIVER);
 
   s->pm = new PubMaster({"roadCameraState", "driverCameraState", "thumbnail"});
 }
@@ -213,16 +218,16 @@ void camera_autoexposure(CameraState *s, float grey_frac) {}
 
 void cameras_open(MultiCameraState *s) {
   LOG("*** open road camera ***");
-  s->road_cam->camera_open();
+  s->road_cam.camera_open();
   LOG("*** open driver camera ***");
-  s->driver_cam->camera_open();
+  s->driver_cam.camera_open();
 }
 
 void cameras_close(MultiCameraState *s) {
   LOG("*** close road camera ***");
-  s->road_cam->camera_close();
+  s->road_cam.camera_close();
   LOG("*** close driver camera ***");
-  s->driver_cam->camera_close();
+  s->driver_cam.camera_close();
   delete s->pm;
 }
 
@@ -247,11 +252,11 @@ void process_road_camera(MultiCameraState *s, CameraState *c, int cnt) {
 void cameras_run(MultiCameraState *s) {
   LOG("-- Starting threads");
   std::vector<std::thread> threads;
-  threads.push_back(start_process_thread(s, s->road_cam, process_road_camera));
-  threads.push_back(start_process_thread(s, s->driver_cam, process_driver_camera));
+  threads.push_back(start_process_thread(s, &s->road_cam, process_road_camera));
+  threads.push_back(start_process_thread(s, &s->driver_cam, process_driver_camera));
 
-  std::thread t_rear = std::thread(road_camera_thread, s->road_cam);
-  driver_camera_thread(s->driver_cam);
+  std::thread t_rear = std::thread(road_camera_thread, &s->road_cam);
+  driver_camera_thread(&s->driver_cam);
 
   LOG(" ************** STOPPING **************");
 
