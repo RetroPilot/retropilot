@@ -51,9 +51,8 @@ void camera_open(CameraState *s) {
                                             &s->device_state_callbacks, &s->camera_device);
   assert(camera_status == ACAMERA_OK); // failed to open camera
 
-  // ** set up capture session **
+  // ** create capture session **
 
-  // ** create capture session output container **
   // ACaptureSessionOutputContainer_create(&s->capture_session_output_container);
   // ACaptureSessionOutput_create()
 
@@ -132,8 +131,7 @@ void camera_init(VisionIpcServer *v, CameraState *s, int camera_id, unsigned int
   s->device_state_callbacks.onError = CameraDeviceOnError;
 
   // ** create image reader **
-  ImageFormat image_format{0, 0};
-  s->image_reader = new ImageReader(&image_format, AIMAGE_FORMAT_YUV_420_888);
+  s->image_reader = new ImageReader(&s->image_format, AIMAGE_FORMAT_YUV_420_888);
 }
 
 void run_camera(CameraState *s, float *ts) {
@@ -147,6 +145,9 @@ void run_camera(CameraState *s, float *ts) {
     // cv::Mat frame_mat, transformed_mat;
     // video_cap >> frame_mat;
     // if (frame_mat.empty()) continue;
+
+    s->image = s->image_reader->GetLatestImage();
+    if (s->image == NULL) continue;
 
     // cv::warpPerspective(frame_mat, transformed_mat, transform, size, cv::INTER_LINEAR, cv::BORDER_CONSTANT, 0);
 

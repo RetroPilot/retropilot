@@ -59,7 +59,9 @@ typedef struct CameraState {
   // android camera id
   const char *camera_id;
 
+  ImageFormat image_format{0, 0};
   ImageReader *image_reader;
+  AImage* image;
 } CameraState;
 
 
