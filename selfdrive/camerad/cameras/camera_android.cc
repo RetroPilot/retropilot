@@ -30,67 +30,7 @@ CameraInfo cameras_supported[CAMERA_ID_MAX] = {
   },
 };
 
-void CameraState::Open() {
-  ACameraManager *camera_manager = multi_camera_state->camera_manager;
-
-  ACameraManager_openCamera(camera_manager, camera_id,
-                                            &device_state_callbacks, &camera_device);
-
-  ANativeWindow *window = image_reader->GetNativeWindow();
-
-  ACaptureSessionOutputContainer_create(&capture_session_output_container);
-  ANativeWindow_acquire(window);
-  ACaptureSessionOutput_create(window, &capture_session_output);
-  ACaptureSessionOutputContainer_add(capture_session_output_container,
-                                     capture_session_output);
-  ACameraOutputTarget_create(window, &camera_output_target);
-
-  // use TEMPLATE_RECORD for good quality and OK frame rate
-  camera_status_t status = ACameraDevice_createCaptureRequest(camera_device,
-                                                              TEMPLATE_RECORD, &capture_request);
-  assert(status == ACAMERA_OK); // failed to create preview capture request
-
-  ACaptureRequest_addTarget(capture_request, camera_output_target);
-
-  capture_session_state_callbacks.onReady = CaptureSessionOnReady;
-  capture_session_state_callbacks.onActive = CaptureSessionOnActive;
-  ACameraDevice_createCaptureSession(camera_device, capture_session_output_container,
-                                     &capture_session_state_callbacks, &capture_session);
-
-  ACameraCaptureSession_setRepeatingRequest(capture_session, NULL, 1, &capture_request, NULL);
-}
-
-void CameraState::Close() {
-  if (capture_request) {
-    ACaptureRequest_free(capture_request);
-    capture_request = NULL;
-  }
-
-  if (camera_output_target) {
-    ACameraOutputTarget_free(camera_output_target);
-    camera_output_target = NULL;
-  }
-
-  if (camera_device) {
-    ACameraDevice_close(camera_device);
-    camera_device = NULL;
-  }
-
-  if (capture_session_output_container) {
-    if (capture_session_output) {
-      ACaptureSessionOutputContainer_remove(capture_session_output_container,
-                                            capture_session_output);
-
-      ACaptureSessionOutput_free(capture_session_output);
-      capture_session_output = NULL;
-    }
-
-    ACaptureSessionOutputContainer_free(capture_session_output_container);
-    capture_session_output_container = NULL;
-  }
-}
-
-void CameraState::Init(VisionIpcServer *v, int camera_num, unsigned int fps, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type) {
+void CameraState::init(VisionIpcServer *v, int camera_num, unsigned int fps, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type) {
   assert(camera_num < std::size(cameras_supported));
   ci = cameras_supported[camera_num];
   assert(ci.frame_width != 0);
@@ -125,7 +65,37 @@ void CameraState::Init(VisionIpcServer *v, int camera_num, unsigned int fps, cl_
   image_reader = new ImageReader(&image_format, AIMAGE_FORMAT_YUV_420_888);
 }
 
-void CameraState::Run(float *ts) {
+void CameraState::open() {
+  ACameraManager *camera_manager = multi_camera_state->camera_manager;
+
+  ACameraManager_openCamera(camera_manager, camera_id,
+                                            &device_state_callbacks, &camera_device);
+
+  ANativeWindow *window = image_reader->GetNativeWindow();
+
+  ACaptureSessionOutputContainer_create(&capture_session_output_container);
+  ANativeWindow_acquire(window);
+  ACaptureSessionOutput_create(window, &capture_session_output);
+  ACaptureSessionOutputContainer_add(capture_session_output_container,
+                                     capture_session_output);
+  ACameraOutputTarget_create(window, &camera_output_target);
+
+  // use TEMPLATE_RECORD for good quality and OK frame rate
+  camera_status_t status = ACameraDevice_createCaptureRequest(camera_device,
+                                                              TEMPLATE_RECORD, &capture_request);
+  assert(status == ACAMERA_OK); // failed to create preview capture request
+
+  ACaptureRequest_addTarget(capture_request, camera_output_target);
+
+  capture_session_state_callbacks.onReady = CaptureSessionOnReady;
+  capture_session_state_callbacks.onActive = CaptureSessionOnActive;
+  ACameraDevice_createCaptureSession(camera_device, capture_session_output_container,
+                                     &capture_session_state_callbacks, &capture_session);
+
+  ACameraCaptureSession_setRepeatingRequest(capture_session, NULL, 1, &capture_request, NULL);
+}
+
+void CameraState::run(float *ts) {
   // TODO: implement transform
   // cv::Size size(ci.frame_width, ci.frame_height);
   // const cv::Mat transform = cv::Mat(3, 3, CV_32F, ts);
@@ -167,6 +137,36 @@ void CameraState::Run(float *ts) {
   }
 }
 
+void CameraState::close() {
+  if (capture_request) {
+    ACaptureRequest_free(capture_request);
+    capture_request = NULL;
+  }
+
+  if (camera_output_target) {
+    ACameraOutputTarget_free(camera_output_target);
+    camera_output_target = NULL;
+  }
+
+  if (camera_device) {
+    ACameraDevice_close(camera_device);
+    camera_device = NULL;
+  }
+
+  if (capture_session_output_container) {
+    if (capture_session_output) {
+      ACaptureSessionOutputContainer_remove(capture_session_output_container,
+                                            capture_session_output);
+
+      ACaptureSessionOutput_free(capture_session_output);
+      capture_session_output = NULL;
+    }
+
+    ACaptureSessionOutputContainer_free(capture_session_output_container);
+    capture_session_output_container = NULL;
+  }
+}
+
 static void road_camera_thread(CameraState *s) {
   util::set_thread_name("android_road_camera_thread");
 
@@ -178,7 +178,7 @@ static void road_camera_thread(CameraState *s) {
   // float ts[9] = {-1.50330396, 0.0, 1223.4,
   //                 0.0, -1.50330396, 797.8,
   //                 0.0, 0.0, 1.0};
-  s->Run(ts);
+  s->run(ts);
 }
 
 void driver_camera_thread(CameraState *s) {
@@ -192,17 +192,17 @@ void driver_camera_thread(CameraState *s) {
   // float ts[9] = {-1.42070485, 0.0, 1182.2,
   //                 0.0, -1.42070485, 773.0,
   //                 0.0, 0.0, 1.0};
-  s->Run(ts);
+  s->run(ts);
 }
 
 void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_id, cl_context ctx) {
   s->camera_manager = ACameraManager_create();
 
   LOG("*** init road camera ***");
-  s->road_cam.Init(v, ROAD_CAMERA_ID, 20, device_id, ctx,
+  s->road_cam.init(v, ROAD_CAMERA_ID, 20, device_id, ctx,
                    VISION_STREAM_RGB_ROAD, VISION_STREAM_ROAD);
   LOG("*** init driver camera ***");
-  s->driver_cam.Init(v, DRIVER_CAMERA_ID, 10, device_id, ctx,
+  s->driver_cam.init(v, DRIVER_CAMERA_ID, 10, device_id, ctx,
                      VISION_STREAM_RGB_DRIVER, VISION_STREAM_DRIVER);
 
   s->pm = new PubMaster({"roadCameraState", "driverCameraState", "thumbnail"});
@@ -212,16 +212,16 @@ void camera_autoexposure(CameraState *s, float grey_frac) {}
 
 void cameras_open(MultiCameraState *s) {
   LOG("*** open road camera ***");
-  s->road_cam.Open();
+  s->road_cam.open();
   LOG("*** open driver camera ***");
-  s->driver_cam.Open();
+  s->driver_cam.open();
 }
 
 void cameras_close(MultiCameraState *s) {
   LOG("*** close road camera ***");
-  s->road_cam.Close();
+  s->road_cam.close();
   LOG("*** close driver camera ***");
-  s->driver_cam.Close();
+  s->driver_cam.close();
   delete s->pm;
 }
 

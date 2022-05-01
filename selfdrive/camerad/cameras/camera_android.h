@@ -51,13 +51,10 @@ public:
   ImageFormat image_format{0, 0};
   ImageReader *image_reader;
 
-  void Init(VisionIpcServer *v, int camera_id, unsigned int fps, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type);
-
-  void Open();
-
-  void Run(float *ts);
-
-  void Close();
+  void init(VisionIpcServer *v, int camera_id, unsigned int fps, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type);
+  void open();
+  void run(float *ts);
+  void close();
 
   // ** Camera Callbacks **
   static void CameraDeviceOnDisconnected(void *context, ACameraDevice *device);
