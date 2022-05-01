@@ -29,8 +29,6 @@ public:
   MultiCameraState *multi_camera_state;
 
   CameraInfo ci;
-  int camera_num;
-  unsigned int fps;
   float digital_gain;
   CameraBuf buf;
 
@@ -50,6 +48,10 @@ public:
 
   ImageFormat image_format{0, 0};
   ImageReader *image_reader;
+
+private:
+  int camera_num_;
+  unsigned int fps_;
 
 public:
   void camera_init(VisionIpcServer *v, int camera_num, unsigned int fps, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type);
