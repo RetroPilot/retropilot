@@ -3,7 +3,7 @@ Import('env', 'arch', 'cereal', 'messaging', 'common', 'gpucommon', 'visionipc',
 libs = ['m', 'pthread', common, 'jpeg', 'OpenCL', 'yuv', cereal, messaging, 'zmq', 'capnp', 'kj', visionipc, gpucommon]
 
 if arch == "aarch64":
-  libs += ['gsl', 'CB', 'adreno_utils', 'EGL', 'GLESv3', 'cutils', 'ui']
+  libs += ['gsl', 'CB', 'adreno_utils', 'EGL', 'GLESv3', 'cutils', 'ui', 'android', 'camera2ndk', 'mediandk']
   cameras = ['cameras/android/image_reader.cc', 'cameras/camera_android.cc']
   cameras = ['cameras/camera_android.cc',
     env.Object('camera-imagereader', '#/selfdrive/camerad/cameras/android/image_reader.cc')]
