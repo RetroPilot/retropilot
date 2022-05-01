@@ -52,21 +52,38 @@ void camera_open(CameraState *s) {
   assert(camera_status == ACAMERA_OK); // failed to open camera
 
   // ** create capture session **
+  ANativeWindow *window = s->image_reader->GetNativeWindow();
 
-  // ACaptureSessionOutputContainer_create(&s->capture_session_output_container);
-  // ACaptureSessionOutput_create()
+  camera_status = ACaptureSessionOutputContainer_create(&s->capture_session_output_container);
+  assert(camera_status == ACAMERA_OK); // failed to create capture session output container
+
+  ANativeWindow_acquire(window);
+  camera_status = ACaptureSessionOutput_create(window, &s->capture_session_output);
+  assert(camera_status == ACAMERA_OK); // failed to create capture session output
+
+  camera_status = ACaptureSessionOutputContainer_add(s->capture_session_output_container,
+                                                     s->capture_session_output);
+  assert(camera_status == ACAMERA_OK); // failed to add capture session output to container
+
+  camera_status = ACameraOutputTarget_create(window, &s->camera_output_target);
+  assert(camera_status == ACAMERA_OK); // failed to create camera output target
 
   camera_status = ACameraDevice_createCaptureRequest(s->camera_device,
                                                      TEMPLATE_RECORD, &s->capture_request);
   assert(camera_status == ACAMERA_OK); // failed to create preview capture request
 
+  camera_status = ACaptureRequest_addTarget(s->capture_request, s->camera_output_target);
+  assert(camera_status == ACAMERA_OK); // failed to add camera output target to preview capture request
+
   s->capture_session_state_callbacks.onReady = &CaptureSessionOnReady;
   s->capture_session_state_callbacks.onActive = &CaptureSessionOnActive;
-  ACameraDevice_createCaptureSession(s->camera_device, s->capture_session_output_container,
-                                     &s->capture_session_state_callbacks, &s->capture_session);
+  camera_status = ACameraDevice_createCaptureSession(s->camera_device, s->capture_session_output_container,
+                                                     &s->capture_session_state_callbacks, &s->capture_session);
+  assert(camera_status == ACAMERA_OK); // failed to create capture session
 
-  ACameraCaptureSession_setRepeatingRequest(s->capture_session, NULL, 1,
-                                            &s->capture_request, NULL);
+  camera_status = ACameraCaptureSession_setRepeatingRequest(s->capture_session, NULL, 1,
+                                                            &s->capture_request, NULL);
+  assert(camera_status == ACAMERA_OK); // failed to set repeating request
 }
 
 void camera_close(CameraState *s) {
