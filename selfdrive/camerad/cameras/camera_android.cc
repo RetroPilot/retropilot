@@ -75,8 +75,8 @@ void camera_open(CameraState *s) {
   camera_status = ACaptureRequest_addTarget(s->capture_request, s->camera_output_target);
   assert(camera_status == ACAMERA_OK); // failed to add camera output target to preview capture request
 
-  s->capture_session_state_callbacks.onReady = &CaptureSessionOnReady;
-  s->capture_session_state_callbacks.onActive = &CaptureSessionOnActive;
+  s->capture_session_state_callbacks.onReady = CaptureSessionOnReady;
+  s->capture_session_state_callbacks.onActive = CaptureSessionOnActive;
   camera_status = ACameraDevice_createCaptureSession(s->camera_device, s->capture_session_output_container,
                                                      &s->capture_session_state_callbacks, &s->capture_session);
   assert(camera_status == ACAMERA_OK); // failed to create capture session
