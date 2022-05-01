@@ -2,15 +2,11 @@
 
 #include <media/NdkImageReader.h>
 
-#include <string>
+#include <cassert>
+#include <cstring>
 
+#include "selfdrive/common/swaglog.h"
 #include "selfdrive/camerad/cameras/android/util.h"
-
-/**
- * FRAME_BUF_COUNT:
- *   Max buffers in this ImageReader.
- */
-#define FRAME_BUF_COUNT 2
 
 /**
  * ImageReader listener: called by AImageReader for every frame captured

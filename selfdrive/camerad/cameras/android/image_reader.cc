@@ -10,7 +10,7 @@ ImageReader::ImageReader(ImageFormat *res, enum AIMAGE_FORMATS format)
       image_width_(res->width) {
 
   media_status_t status = AImageReader_new(res->width, res->height, format,
-                                          1, &reader_);
+                                          2, &reader_);
   assert(reader_ && status == AMEDIA_OK); // failed to create AImageReader
 
   AImageReader_ImageListener listener{

@@ -10,7 +10,7 @@
 #include <camera/NdkCaptureRequest.h>
 #include <media/NdkImageReader.h>
 
-#include <string>
+#include <cstring>
 
 #include "selfdrive/camerad/cameras/camera_common.h"
 #include "selfdrive/camerad/cameras/android/image_reader.h"
