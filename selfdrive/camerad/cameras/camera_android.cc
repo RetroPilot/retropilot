@@ -11,8 +11,6 @@ const int DRIVER_CAMERA_ID = util::getenv("DRIVERCAM_ID", 2);
 
 extern ExitHandler do_exit;
 
-namespace {
-
 CameraInfo cameras_supported[CAMERA_ID_MAX] = {
   // road facing
   [CAMERA_ID_IMX363] = {
@@ -196,8 +194,6 @@ void driver_camera_thread(CameraState *s) {
   //                 0.0, 0.0, 1.0};
   s->Run(ts);
 }
-
-}  // namespace
 
 void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_id, cl_context ctx) {
   s->camera_manager = ACameraManager_create();
