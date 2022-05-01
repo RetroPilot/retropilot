@@ -25,9 +25,6 @@ public:
 private:
   AImageReader *reader_;
 
-  uint32_t image_height_;
-  uint32_t image_width_;
-
   uint8_t *image_buffer_;
 };
 

@@ -1,9 +1,7 @@
 #include "selfdrive/camerad/cameras/android/image_reader.h"
 
 ImageReader::ImageReader(ImageFormat *res, enum AIMAGE_FORMATS format)
-    : reader_(NULL),
-      image_height_(res->height),
-      image_width_(res->width) {
+    : reader_(NULL) {
 
   media_status_t status = AImageReader_new(res->width, res->height, format,
                                           2, &reader_);
