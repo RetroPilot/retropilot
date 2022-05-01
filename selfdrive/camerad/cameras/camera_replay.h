@@ -17,8 +17,8 @@ typedef struct CameraState {
 } CameraState;
 
 typedef struct MultiCameraState {
-  CameraState road_cam;
-  CameraState driver_cam;
+  CameraState *road_cam;
+  CameraState *driver_cam;
 
   SubMaster *sm = nullptr;
   PubMaster *pm = nullptr;

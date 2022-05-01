@@ -30,18 +30,13 @@ CameraInfo cameras_supported[CAMERA_ID_MAX] = {
   },
 };
 
-void CameraState::init(VisionIpcServer *v, int camera_num, unsigned int fps, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type) {
-  assert(camera_num < std::size(cameras_supported));
-  ci = cameras_supported[camera_num];
-  assert(ci.frame_width != 0);
-
-  camera_num = camera_num;
-  fps = fps;
+void CameraState::camera_init(VisionIpcServer *v, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type) {
+  // ** initialise camera buffer **
   buf.init(device_id, ctx, this, v, FRAME_BUF_COUNT, rgb_type, yuv_type);
 
+  // ** get camera list **
   ACameraManager *camera_manager = multi_camera_state->camera_manager;
 
-  // ** get camera list **
   ACameraIdList *camera_id_list = NULL;
   camera_status_t camera_status = ACameraManager_getCameraIdList(camera_manager, &camera_id_list);
   assert(camera_status == ACAMERA_OK); // failed to get camera id list
@@ -65,7 +60,7 @@ void CameraState::init(VisionIpcServer *v, int camera_num, unsigned int fps, cl_
   image_reader = new ImageReader(&image_format, AIMAGE_FORMAT_YUV_420_888);
 }
 
-void CameraState::open() {
+void CameraState::camera_open() {
   ACameraManager *camera_manager = multi_camera_state->camera_manager;
 
   ACameraManager_openCamera(camera_manager, camera_id,
@@ -95,7 +90,7 @@ void CameraState::open() {
   ACameraCaptureSession_setRepeatingRequest(capture_session, NULL, 1, &capture_request, NULL);
 }
 
-void CameraState::run(float *ts) {
+void CameraState::camera_run(float *ts) {
   // TODO: implement transform
   // cv::Size size(ci.frame_width, ci.frame_height);
   // const cv::Mat transform = cv::Mat(3, 3, CV_32F, ts);
@@ -137,7 +132,7 @@ void CameraState::run(float *ts) {
   }
 }
 
-void CameraState::close() {
+void CameraState::camera_close() {
   if (capture_request) {
     ACaptureRequest_free(capture_request);
     capture_request = NULL;
@@ -178,7 +173,7 @@ static void road_camera_thread(CameraState *s) {
   // float ts[9] = {-1.50330396, 0.0, 1223.4,
   //                 0.0, -1.50330396, 797.8,
   //                 0.0, 0.0, 1.0};
-  s->run(ts);
+  s->camera_run(ts);
 }
 
 void driver_camera_thread(CameraState *s) {
@@ -192,18 +187,18 @@ void driver_camera_thread(CameraState *s) {
   // float ts[9] = {-1.42070485, 0.0, 1182.2,
   //                 0.0, -1.42070485, 773.0,
   //                 0.0, 0.0, 1.0};
-  s->run(ts);
+  s->camera_run(ts);
 }
 
 void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_id, cl_context ctx) {
   s->camera_manager = ACameraManager_create();
+  s->road_cam = new CameraState(ROAD_CAMERA_ID, 20);
+  s->driver_cam = new CameraState(DRIVER_CAMERA_ID, 10);
 
   LOG("*** init road camera ***");
-  s->road_cam.init(v, ROAD_CAMERA_ID, 20, device_id, ctx,
-                   VISION_STREAM_RGB_ROAD, VISION_STREAM_ROAD);
+  s->road_cam->camera_init(v, device_id, ctx, VISION_STREAM_RGB_ROAD, VISION_STREAM_ROAD);
   LOG("*** init driver camera ***");
-  s->driver_cam.init(v, DRIVER_CAMERA_ID, 10, device_id, ctx,
-                     VISION_STREAM_RGB_DRIVER, VISION_STREAM_DRIVER);
+  s->driver_cam->camera_init(v, device_id, ctx, VISION_STREAM_RGB_DRIVER, VISION_STREAM_DRIVER);
 
   s->pm = new PubMaster({"roadCameraState", "driverCameraState", "thumbnail"});
 }
@@ -212,16 +207,16 @@ void camera_autoexposure(CameraState *s, float grey_frac) {}
 
 void cameras_open(MultiCameraState *s) {
   LOG("*** open road camera ***");
-  s->road_cam.open();
+  s->road_cam->camera_open();
   LOG("*** open driver camera ***");
-  s->driver_cam.open();
+  s->driver_cam->camera_open();
 }
 
 void cameras_close(MultiCameraState *s) {
   LOG("*** close road camera ***");
-  s->road_cam.close();
+  s->road_cam->camera_close();
   LOG("*** close driver camera ***");
-  s->driver_cam.close();
+  s->driver_cam->camera_close();
   delete s->pm;
 }
 
@@ -246,11 +241,11 @@ void process_road_camera(MultiCameraState *s, CameraState *c, int cnt) {
 void cameras_run(MultiCameraState *s) {
   LOG("-- Starting threads");
   std::vector<std::thread> threads;
-  threads.push_back(start_process_thread(s, &s->road_cam, process_road_camera));
-  threads.push_back(start_process_thread(s, &s->driver_cam, process_driver_camera));
+  threads.push_back(start_process_thread(s, s->road_cam, process_road_camera));
+  threads.push_back(start_process_thread(s, s->driver_cam, process_driver_camera));
 
-  std::thread t_rear = std::thread(road_camera_thread, &s->road_cam);
-  driver_camera_thread(&s->driver_cam);
+  std::thread t_rear = std::thread(road_camera_thread, s->road_cam);
+  driver_camera_thread(s->driver_cam);
 
   LOG(" ************** STOPPING **************");
 

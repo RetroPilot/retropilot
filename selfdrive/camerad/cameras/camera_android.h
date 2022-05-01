@@ -30,8 +30,7 @@ public:
 
   CameraInfo ci;
   int camera_num;
-  int fps;
-  float digital_gain;
+  unsigned int fps;
   CameraBuf buf;
 
   ACameraDevice *camera_device;
@@ -51,11 +50,19 @@ public:
   ImageFormat image_format{0, 0};
   ImageReader *image_reader;
 
-  void init(VisionIpcServer *v, int camera_id, unsigned int fps, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type);
-  void open();
-  void run(float *ts);
-  void close();
+public:
+  explicit CameraState(int camera_num, unsigned int fps) : camera_num(camera_num), fps(fps) {
+    assert(camera_num < std::size(cameras_supported));
+    ci = cameras_supported[camera_num];
+    assert(ci.frame_width != 0);
+  }
 
+  void camera_init(VisionIpcServer *v, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type);
+  void camera_open();
+  void camera_run(float *ts);
+  void camera_close();
+
+private:
   // ** Camera Callbacks **
   static void CameraDeviceOnDisconnected(void *context, ACameraDevice *device);
   static void CameraDeviceOnError(void *context, ACameraDevice *device, int error);
@@ -69,8 +76,8 @@ public:
 typedef struct MultiCameraState {
   ACameraManager *camera_manager;
 
-  CameraState road_cam;
-  CameraState driver_cam;
+  CameraState *road_cam;
+  CameraState *driver_cam;
 
   SubMaster *sm;
   PubMaster *pm;
