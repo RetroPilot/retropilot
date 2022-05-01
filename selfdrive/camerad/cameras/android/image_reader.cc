@@ -1,9 +1,5 @@
 #include "selfdrive/camerad/cameras/android/image_reader.h"
 
-#include <cassert>
-
-#include "selfdrive/common/swaglog.h"
-
 ImageReader::ImageReader(ImageFormat *res, enum AIMAGE_FORMATS format)
     : reader_(NULL),
       image_height_(res->height),

@@ -3,7 +3,7 @@
 #include <media/NdkImageReader.h>
 
 #include <cassert>
-#include <cstring>
+#include <stdlib.h>
 
 #include "selfdrive/common/swaglog.h"
 #include "selfdrive/camerad/cameras/android/util.h"
