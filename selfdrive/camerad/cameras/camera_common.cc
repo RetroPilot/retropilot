@@ -1,6 +1,7 @@
 #include "selfdrive/camerad/cameras/camera_common.h"
 
 #ifdef QCOM
+#include "CL/cl_ext_qcom.h"
 #include "selfdrive/camerad/cameras/camera_android.h"
 #elif QCOM2
 #include "CL/cl_ext_qcom.h"
