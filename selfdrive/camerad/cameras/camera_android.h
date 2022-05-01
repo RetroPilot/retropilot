@@ -57,7 +57,6 @@ public:
   void camera_run(float *ts);
   void camera_close();
 
-private:
   // ** Camera Callbacks **
   static void CameraDeviceOnDisconnected(void *context, ACameraDevice *device);
   static void CameraDeviceOnError(void *context, ACameraDevice *device, int error);
