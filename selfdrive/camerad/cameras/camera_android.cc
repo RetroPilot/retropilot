@@ -184,7 +184,7 @@ static void road_camera_thread(CameraState *s) {
   //                 0.0, -1.50330396, 797.8,
   //                 0.0, 0.0, 1.0};
 
-  run_camera(s, cap_road, ts);
+  run_camera(s, ts);
 }
 
 void driver_camera_thread(CameraState *s) {
@@ -202,7 +202,7 @@ void driver_camera_thread(CameraState *s) {
   // float ts[9] = {-1.42070485, 0.0, 1182.2,
   //                 0.0, -1.42070485, 773.0,
   //                 0.0, 0.0, 1.0};
-  run_camera(s, cap_driver, ts);
+  run_camera(s, ts);
 }
 
 }  // namespace
