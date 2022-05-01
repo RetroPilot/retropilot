@@ -61,7 +61,6 @@ typedef struct CameraState {
 
   ImageFormat image_format{0, 0};
   ImageReader *image_reader;
-  AImage* image;
 } CameraState;
 
 

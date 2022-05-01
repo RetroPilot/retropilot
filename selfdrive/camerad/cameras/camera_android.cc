@@ -162,12 +162,28 @@ void run_camera(CameraState *s, float *ts) {
     // video_cap >> frame_mat;
     // if (frame_mat.empty()) continue;
 
-    s->image = s->image_reader->GetLatestImage();
-    if (s->image == NULL) continue;
+    // ** get image **
+    AImage *image = s->image_reader->GetLatestImage();
+    if (image == NULL) continue;
+
+    // ** debug **
+    int32_t format = -1;
+    AImage_getFormat(image, &format);
+    assert(format == AIMAGE_FORMAT_YUV_420_888);
+
+    int32_t planes = 0;
+    AImage_getNumberOfPlanes(image, &planes);
+    assert(planes == 3);
 
     // cv::warpPerspective(frame_mat, transformed_mat, transform, size, cv::INTER_LINEAR, cv::BORDER_CONSTANT, 0);
 
     s->buf.camera_bufs_metadata[buf_idx] = {.frame_id = frame_id};
+
+    // ** copy image data to cl buffer **
+
+    int32_t width = 0, height = 0;
+    AImage_getWidth(image, &width);
+    AImage_getHeight(image, &height);
 
     auto &buf = s->buf.camera_bufs[buf_idx];
     int transformed_size = transformed_mat.total() * transformed_mat.elemSize();
@@ -183,14 +199,6 @@ void run_camera(CameraState *s, float *ts) {
 static void road_camera_thread(CameraState *s) {
   util::set_thread_name("android_road_camera_thread");
 
-  // cv::VideoCapture cap_road(ROAD_CAMERA_ID, cv::CAP_V4L2); // road
-  // cap_road.set(cv::CAP_PROP_FRAME_WIDTH, 853);
-  // cap_road.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
-  // cap_road.set(cv::CAP_PROP_FPS, s->fps);
-  // cap_road.set(cv::CAP_PROP_AUTOFOCUS, 0); // off
-  // cap_road.set(cv::CAP_PROP_FOCUS, 0); // 0 - 255?
-  // // cv::Rect roi_rear(160, 0, 960, 720);
-
   // transforms calculation see tools/webcam/warp_vis.py
   float ts[9] = {1.50330396, 0.0, -59.40969163,
                   0.0, 1.50330396, 76.20704846,
@@ -204,11 +212,7 @@ static void road_camera_thread(CameraState *s) {
 }
 
 void driver_camera_thread(CameraState *s) {
-  // cv::VideoCapture cap_driver(DRIVER_CAMERA_ID, cv::CAP_V4L2); // driver
-  // cap_driver.set(cv::CAP_PROP_FRAME_WIDTH, 853);
-  // cap_driver.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
-  // cap_driver.set(cv::CAP_PROP_FPS, s->fps);
-  // // cv::Rect roi_front(320, 0, 960, 720);
+  util::set_thread_name("android_driver_camera_thread");
 
   // transforms calculation see tools/webcam/warp_vis.py
   float ts[9] = {1.42070485, 0.0, -30.16740088,
@@ -278,7 +282,6 @@ void cameras_run(MultiCameraState *s) {
   threads.push_back(start_process_thread(s, &s->driver_cam, process_driver_camera));
 
   std::thread t_rear = std::thread(road_camera_thread, &s->road_cam);
-  util::set_thread_name("android_thread");
   driver_camera_thread(&s->driver_cam);
 
   LOG(" ************** STOPPING **************");
