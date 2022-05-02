@@ -167,6 +167,22 @@ void CameraState::camera_close() {
   }
 }
 
+void CameraState::CameraDeviceOnDisconnected(void *context, ACameraDevice *device) {
+  LOG("Camera(id: %s) is diconnected.\n", ACameraDevice_getId(device));
+}
+
+void CameraState::CameraDeviceOnError(void *context, ACameraDevice *device, int error) {
+  LOGE("Error(code: %d) on Camera(id: %s).\n", error, ACameraDevice_getId(device));
+}
+
+void CameraState::CaptureSessionOnReady(void *context, ACameraCaptureSession *session) {
+  LOG("Session is ready.\n");
+}
+
+void CameraState::CaptureSessionOnActive(void *context, ACameraCaptureSession *session) {
+  LOG("Session is active.\n");
+}
+
 static void road_camera_thread(CameraState *s) {
   util::set_thread_name("android_road_camera_thread");
 
