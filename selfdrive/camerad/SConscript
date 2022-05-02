@@ -6,6 +6,8 @@ if arch == "aarch64":
   libs += ['gsl', 'CB', 'adreno_utils', 'EGL', 'GLESv3', 'cutils', 'ui', 'android', 'camera2ndk', 'mediandk']
   cameras = ['cameras/camera_android.cc',
     env.Object('camera-imagereader', '#/selfdrive/camerad/cameras/android/image_reader.cc')]
+  env = env.Clone()
+  env['LIBPATH'] = '/systme/lib64' + env['LIBPATH']
 elif arch == "larch64":
   libs += ['atomic']
   cameras = ['cameras/camera_qcom2.cc']
