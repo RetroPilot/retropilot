@@ -117,8 +117,8 @@ void CameraState::camera_run(float *ts) {
   while (!do_exit) {
     // ** get image **
     AImage *image = image_reader->GetLatestImage();
-    LOGD("camera_run: image=%p", image);
     if (image == NULL) continue;
+    LOGD("camera_run: image=%p", image);
 
     // ** debug **
     int32_t format = -1;

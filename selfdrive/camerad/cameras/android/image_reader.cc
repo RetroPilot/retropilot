@@ -52,8 +52,10 @@ ANativeWindow *ImageReader::GetNativeWindow() {
 AImage *ImageReader::GetLatestImage() {
   AImage *image = NULL;
   media_status_t status = AImageReader_acquireLatestImage(reader_, &image);
-  LOGD("ImageReader: AImageReader_acquireLatestImage status %d", status);
   if (status != AMEDIA_OK) {
+    if (status != AMEDIA_IMGREADER_NO_BUFFER_AVAILABLE) {
+      LOGD("ImageReader: AImageReader_acquireLatestImage status %d", status);
+    }
     // image is not available
     return nullptr;
   }
