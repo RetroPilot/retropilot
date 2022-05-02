@@ -37,6 +37,7 @@ void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServe
   ci = cameras_supported[camera_id_];
   assert(ci.frame_width != 0);
 
+  camera_num = camera_index;
   fps = fps_;
   // TODO: fix me
   // buf.init(device_id, ctx, this, v, FRAME_BUF_COUNT, rgb_type, yuv_type);

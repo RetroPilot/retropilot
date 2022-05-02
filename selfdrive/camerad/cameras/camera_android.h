@@ -27,6 +27,7 @@
 class CameraState {
 public:
   CameraInfo ci;
+  int camera_num;
   unsigned int fps;
   float digital_gain;
   CameraBuf buf;
