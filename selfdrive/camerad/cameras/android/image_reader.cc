@@ -43,6 +43,7 @@ ANativeWindow *ImageReader::GetNativeWindow() {
 
   ANativeWindow *native_window;
   media_status_t status = AImageReader_getWindow(reader_, &native_window);
+  LOGD("ImageReader: AImageReader_getWindow status %d", status);
   assert(status == AMEDIA_OK); // failed to get native window
 
   return native_window;
@@ -51,6 +52,7 @@ ANativeWindow *ImageReader::GetNativeWindow() {
 AImage *ImageReader::GetLatestImage() {
   AImage *image = NULL;
   media_status_t status = AImageReader_acquireLatestImage(reader_, &image);
+  LOGD("ImageReader: AImageReader_acquireLatestImage status %d", status);
   assert(status == AMEDIA_OK); // image is not available
 
   return image;
