@@ -80,6 +80,7 @@ void CameraState::camera_open() {
 
   camera_status_t status = ACameraManager_openCamera(camera_manager, camera_id,
                                                      get_device_listener(), &camera_device);
+  LOGD("camera_open: open camera %s status %d", camera_id, status);
   assert(status == ACAMERA_OK);
 
   ANativeWindow *window = image_reader->GetNativeWindow();
