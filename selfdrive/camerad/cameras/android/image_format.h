@@ -10,4 +10,4 @@ struct ImageFormat {
 
   int32_t format; // Through out this demo, the format is fixed to
                   // YUV_420 format
-}
+};
