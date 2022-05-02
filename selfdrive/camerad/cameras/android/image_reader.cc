@@ -7,6 +7,7 @@ ImageReader::ImageReader(ImageFormat *res, enum AIMAGE_FORMATS format)
 
   media_status_t status = AImageReader_new(res->width, res->height, format,
                                           2, &reader_);
+  LOGD("ImageReader: AImageReader_new status %d", status);
   assert(reader_ && status == AMEDIA_OK); // failed to create AImageReader
 
   LOGD("ImageReader: created AImageReader");
