@@ -53,7 +53,10 @@ AImage *ImageReader::GetLatestImage() {
   AImage *image = NULL;
   media_status_t status = AImageReader_acquireLatestImage(reader_, &image);
   LOGD("ImageReader: AImageReader_acquireLatestImage status %d", status);
-  assert(status == AMEDIA_OK); // image is not available
+  if (status != AMEDIA_OK) {
+    // image is not available
+    return nullptr;
+  }
 
   return image;
 }
