@@ -3,10 +3,10 @@
 #include <media/NdkImageReader.h>
 
 #include <cassert>
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "selfdrive/common/swaglog.h"
-#include "selfdrive/camerad/cameras/android/util.h"
+#include "selfdrive/camerad/cameras/android/image_format.h"
 
 class ImageReader {
 public:
@@ -14,13 +14,22 @@ public:
 
   ~ImageReader();
 
+  /**
+   * Report cached ANativeWindow, which was used to create camera's capture
+   * session output.
+   */
   ANativeWindow *GetNativeWindow();
 
+  /**
+   * Retrieve Image on the back of Reader's queue, dropping older images
+   */
   AImage *GetLatestImage();
 
+  /**
+   * Delete Image
+   * @param image {@link AImage} instance to be deleted
+   */
   void DeleteImage(AImage *image);
-
-  static void OnImageCallback(void *context, AImageReader *reader);
 
 private:
   AImageReader *reader_;

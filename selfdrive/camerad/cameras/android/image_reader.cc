@@ -1,22 +1,20 @@
 #include "selfdrive/camerad/cameras/android/image_reader.h"
 
+/**
+ * MAX_BUF_COUNT:
+ *   Max buffers in this ImageReader.
+ */
+#define MAX_BUF_COUNT 4
+
 ImageReader::ImageReader(ImageFormat *res, enum AIMAGE_FORMATS format)
     : reader_(NULL) {
 
-  LOGD("ImageReader");
-
   media_status_t status = AImageReader_new(res->width, res->height, format,
-                                           1, &reader_);
+                                           MAX_BUF_COUNT, &reader_);
   LOGD("ImageReader: AImageReader_new status %d", status);
   assert(reader_ && status == AMEDIA_OK); // failed to create AImageReader
 
   LOGD("ImageReader: created AImageReader");
-
-  AImageReader_ImageListener listener{
-    .context = this,
-    .onImageAvailable = OnImageCallback,
-  };
-  AImageReader_setImageListener(reader_, &listener);
 
   // assuming 4 bit per pixel max
   LOGD("ImageReader: Image Buffer Size: %d", res->width * res->height * 4);
@@ -67,8 +65,4 @@ void ImageReader::DeleteImage(AImage *image) {
   if (image) {
     AImage_delete(image);
   }
-}
-
-void ImageReader::OnImageCallback(void *context, AImageReader *reader) {
-  LOGD("ImageReader: OnImageCallback");
 }

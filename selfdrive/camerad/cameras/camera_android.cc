@@ -1,5 +1,7 @@
 #include "selfdrive/camerad/cameras/camera_android.h"
 
+#include "selfdrive/common/swaglog.h"
+
 // id of the video capturing device
 const int ROAD_CAMERA_INDEX = util::getenv("ROADCAM_ID", 0);
 const int DRIVER_CAMERA_INDEX = util::getenv("DRIVERCAM_ID", 1);
@@ -70,6 +72,7 @@ void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServe
   image_format = new ImageFormat();
   image_format->width = ci.frame_width;
   image_format->height = ci.frame_height;
+  image_format->format = AIMAGE_FORMAT_YUV_420_888;
   image_reader = new ImageReader(image_format, AIMAGE_FORMAT_YUV_420_888);
 }
 

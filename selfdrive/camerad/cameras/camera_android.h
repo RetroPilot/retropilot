@@ -16,13 +16,13 @@
 #include <cstring>
 
 #include "selfdrive/common/clutil.h"
-#include "selfdrive/common/swaglog.h"
 #include "selfdrive/common/timing.h"
 #include "selfdrive/common/util.h"
 #include "selfdrive/camerad/cameras/camera_common.h"
+#include "selfdrive/camerad/cameras/android/image_format.h"
 #include "selfdrive/camerad/cameras/android/image_reader.h"
 
-#define FRAME_BUF_COUNT 16
+#define FRAME_BUF_COUNT 4
 
 class CameraState {
 public:
