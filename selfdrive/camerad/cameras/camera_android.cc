@@ -31,6 +31,8 @@ CameraInfo cameras_supported[CAMERA_ID_MAX] = {
 };
 
 void CameraState::camera_init(VisionIpcServer *v, int camera_num_, unsigned int fps_, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type) {
+  LOG("camera_init camera_num=%d fps=%d", camera_num_, fps_);
+
   assert(camera_num_ < std::size(cameras_supported));
   ci = cameras_supported[camera_num_];
   assert(ci.frame_width != 0);
@@ -67,6 +69,8 @@ void CameraState::camera_init(VisionIpcServer *v, int camera_num_, unsigned int 
 }
 
 void CameraState::camera_open() {
+  LOG("camera_open");
+
   ACameraManager *camera_manager = multi_camera_state->camera_manager;
 
   ACameraManager_openCamera(camera_manager, camera_id,
@@ -97,6 +101,8 @@ void CameraState::camera_open() {
 }
 
 void CameraState::camera_run(float *ts) {
+  LOG("camera_run");
+
   // TODO: implement transform
   // cv::Size size(ci.frame_width, ci.frame_height);
   // const cv::Mat transform = cv::Mat(3, 3, CV_32F, ts);
@@ -139,6 +145,8 @@ void CameraState::camera_run(float *ts) {
 }
 
 void CameraState::camera_close() {
+  LOG("camera_close");
+
   if (capture_request) {
     ACaptureRequest_free(capture_request);
     capture_request = NULL;
@@ -169,19 +177,19 @@ void CameraState::camera_close() {
 }
 
 void CameraState::CameraDeviceOnDisconnected(void *context, ACameraDevice *device) {
-  LOG("Camera(id: %s) is diconnected.\n", ACameraDevice_getId(device));
+  LOG("Camera(id: %s) is diconnected", ACameraDevice_getId(device));
 }
 
 void CameraState::CameraDeviceOnError(void *context, ACameraDevice *device, int error) {
-  LOGE("Error(code: %d) on Camera(id: %s).\n", error, ACameraDevice_getId(device));
+  LOGE("Error(code: %d) on Camera(id: %s)", error, ACameraDevice_getId(device));
 }
 
 void CameraState::CaptureSessionOnReady(void *context, ACameraCaptureSession *session) {
-  LOG("Session is ready.\n");
+  LOG("Session is ready");
 }
 
 void CameraState::CaptureSessionOnActive(void *context, ACameraCaptureSession *session) {
-  LOG("Session is active.\n");
+  LOG("Session is active");
 }
 
 static void road_camera_thread(CameraState *s) {
