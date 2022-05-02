@@ -61,10 +61,6 @@ void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServe
   camera_id = camera_id_list->cameraIds[camera_index];
   LOGD("camera_init: android camera_id %s", camera_id);
 
-  // ** setup callbacks **
-  device_state_callbacks.onDisconnected = CameraDeviceOnDisconnected;
-  device_state_callbacks.onError = CameraDeviceOnError;
-
   // ** create image reader **
   image_format = new ImageFormat();
   image_format->width = ci.frame_width;
@@ -78,7 +74,7 @@ void CameraState::camera_open() {
   ACameraManager *camera_manager = multi_cam_state->camera_manager;
 
   camera_status_t status = ACameraManager_openCamera(camera_manager, camera_id,
-                                            &device_state_callbacks, &camera_device);
+                                            get_device_listener(), &camera_device);
   assert(status == ACAMERA_OK);
 
   ANativeWindow *window = image_reader->GetNativeWindow();
@@ -101,11 +97,8 @@ void CameraState::camera_open() {
   status = ACaptureRequest_addTarget(capture_request, camera_output_target);
   assert(status == ACAMERA_OK);
 
-  capture_session_state_callbacks.onReady = CaptureSessionOnReady;
-  capture_session_state_callbacks.onActive = CaptureSessionOnActive;
-  capture_session_state_callbacks.onClosed = CaptureSessionOnClosed;
   status = ACameraDevice_createCaptureSession(camera_device, capture_session_output_container,
-                                              &capture_session_state_callbacks, &capture_session);
+                                              get_capture_session_listener(), &capture_session);
   assert(status == ACAMERA_OK);
 
   status = ACameraCaptureSession_setRepeatingRequest(capture_session, NULL, 1, &capture_request, NULL);
@@ -191,12 +184,31 @@ void CameraState::camera_close() {
   }
 }
 
+ACameraDevice_StateCallbacks *CameraState::get_device_listener() {
+  static ACameraDevice_stateCallbacks device_listener = {
+    .context = this,
+    .onDisconnected = CameraDeviceOnDisconnected,
+    .onError = CameraDeviceOnError,
+  };
+  return &device_listener;
+}
+
 void CameraState::CameraDeviceOnDisconnected(void *context, ACameraDevice *device) {
   LOGW("Camera(id: %s) is diconnected", ACameraDevice_getId(device));
 }
 
 void CameraState::CameraDeviceOnError(void *context, ACameraDevice *device, int error) {
   LOGE("Error(code: %d) on Camera(id: %s)", error, ACameraDevice_getId(device));
+}
+
+ACameraCaptureSession_stateCallbacks *CameraState::get_capture_session_listener() {
+  static ACameraCaptureSession_stateCallbacks session_listener = {
+    .context = this,
+    .onActive = CaptureSessionOnActive,
+    .onReady = CaptureSessionOnReady,
+    .onClosed = CaptureSessionOnClosed,
+  };
+  return &session_listener;
 }
 
 void CameraState::CaptureSessionOnReady(void *context, ACameraCaptureSession *session) {

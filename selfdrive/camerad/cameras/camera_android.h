@@ -42,9 +42,6 @@ private:
   ACaptureSessionOutputContainer *capture_session_output_container;
   ACameraCaptureSession *capture_session;
 
-  ACameraDevice_StateCallbacks device_state_callbacks;
-  ACameraCaptureSession_stateCallbacks capture_session_state_callbacks;
-
   int32_t camera_orientation;
   const char *camera_id;
 
@@ -56,6 +53,9 @@ public:
   void camera_open();
   void camera_run(float *ts);
   void camera_close();
+
+  ACameraDevice_StateCallbacks *get_device_listener();
+  ACameraCaptureSession_stateCallbacks *get_capture_session_listener();
 
   // ** Camera Callbacks **
   static void CameraDeviceOnDisconnected(void *context, ACameraDevice *device);
