@@ -47,13 +47,14 @@ void CameraState::camera_init(VisionIpcServer *v, int camera_num_, unsigned int 
   assert(camera_status == ACAMERA_OK); // failed to get camera id list
 
   // ** set (android) camera id **
-  camera_id = camera_id_list->cameraIds[camera_num];
 
   // ASSUMPTION: IXM363 (road) is index[0] and IMX355 (driver) is index[1]
   // TODO: check that we actually need to rotate
   if (camera_num == CAMERA_ID_IMX363) {
+    camera_id = camera_id_list->cameraIds[0];
     camera_orientation = 90;
   } else if (camera_num == CAMERA_ID_IMX355) {
+    camera_id = camera_id_list->cameraIds[1];
     camera_orientation = 270;
   }
 
