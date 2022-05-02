@@ -56,15 +56,6 @@ public:
 
   ACameraDevice_StateCallbacks *get_device_listener();
   ACameraCaptureSession_stateCallbacks *get_capture_session_listener();
-
-  // ** Camera Callbacks **
-  static void CameraDeviceOnDisconnected(void *context, ACameraDevice *device);
-  static void CameraDeviceOnError(void *context, ACameraDevice *device, int error);
-
-  // ** Capture Callbacks **
-  static void CaptureSessionOnReady(void *context, ACameraCaptureSession *session);
-  static void CaptureSessionOnActive(void *context, ACameraCaptureSession *session);
-  static void CaptureSessionOnClosed(void *context, ACameraCaptureSession *session);
 };
 
 

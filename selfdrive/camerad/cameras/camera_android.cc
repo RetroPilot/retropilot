@@ -188,40 +188,66 @@ void CameraState::camera_close() {
 ACameraDevice_StateCallbacks *CameraState::get_device_listener() {
   static ACameraDevice_stateCallbacks device_listener = {
     .context = this,
-    .onDisconnected = CameraDeviceOnDisconnected,
-    .onError = CameraDeviceOnError,
+    .onDisconnected = ::OnDeviceDisconnect,
+    .onError = ::OnDeviceError,
   };
   return &device_listener;
 }
 
-void CameraState::CameraDeviceOnDisconnected(void *context, ACameraDevice *device) {
-  LOGW("Camera(id: %s) is diconnected", ACameraDevice_getId(device));
+// ** CameraDevice callbacks **
+
+static void OnDeviceDisconnect(void* /* ctx */, ACameraDevice* dev) {
+  std::string id(ACameraDevice_getId(dev));
+  LOGW("Device %s disconnected", id.c_str());
 }
 
-void CameraState::CameraDeviceOnError(void *context, ACameraDevice *device, int error) {
-  LOGE("Error(code: %d) on Camera(id: %s)", error, ACameraDevice_getId(device));
+static void OnDeviceError(void* /* ctx */, ACameraDevice* dev, int err) {
+  std::string id(ACameraDevice_getId(dev));
+  LOGE("Camera Device Error: %#x, Device %s", err, id.c_str());
+
+  switch (err) {
+    case ERROR_CAMERA_IN_USE:
+      LOGE("Camera in use");
+      break;
+    case ERROR_CAMERA_SERVICE:
+      LOGE("Fatal Error occured in Camera Service");
+      break;
+    case ERROR_CAMERA_DEVICE:
+      LOGE("Fatal Error occured in Camera Device");
+      break;
+    case ERROR_CAMERA_DISABLED:
+      LOGE("Camera disabled");
+      break;
+    case ERROR_MAX_CAMERAS_IN_USE:
+      LOGE("System limit for maximum concurrent cameras used was exceeded");
+      break;
+    default:
+      LOGE("Unknown Camera Device Error: %#x", err);
+  }
 }
+
+// ** CaptureSession callbacks **
 
 ACameraCaptureSession_stateCallbacks *CameraState::get_capture_session_listener() {
   static ACameraCaptureSession_stateCallbacks session_listener = {
     .context = this,
-    .onActive = CaptureSessionOnActive,
-    .onReady = CaptureSessionOnReady,
-    .onClosed = CaptureSessionOnClosed,
+    .onActive = ::OnSessionActive,
+    .onReady = ::OnSessionReady,
+    .onClosed = ::OnSessionClosed,
   };
   return &session_listener;
 }
 
-void CameraState::CaptureSessionOnReady(void *context, ACameraCaptureSession *session) {
-  LOGD("Capture Session is ready");
+void OnSessionClosed(void *context, ACameraCaptureSession *session) {
+  LOGW("session %p closed", session);
 }
 
-void CameraState::CaptureSessionOnActive(void *context, ACameraCaptureSession *session) {
-  LOGD("Capture Session is active");
+void OnSessionReady(void *context, ACameraCaptureSession *session) {
+  LOGD("session %p ready", session);
 }
 
-void CameraState::CaptureSessionOnClosed(void *context, ACameraCaptureSession *session) {
-  LOGW("Capture Session is closed");
+void OnSessionActive(void *context, ACameraCaptureSession *session) {
+  LOGD("session %p active", session);
 }
 
 static void road_camera_thread(CameraState *s) {
