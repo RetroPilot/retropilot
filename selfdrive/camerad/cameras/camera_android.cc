@@ -58,6 +58,9 @@ void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServe
   camera_status_t camera_status = ACameraManager_getCameraIdList(camera_manager, &camera_id_list);
   assert(camera_status == ACAMERA_OK); // failed to get camera id list
 
+  LOGD("camera_init: found %d cameras", camera_id_list->numCameras);
+  assert(camera_id_list->numCameras > 0); // no cameras found
+
   camera_id = camera_id_list->cameraIds[camera_index];
   LOGD("camera_init: android camera_id %s", camera_id);
 
