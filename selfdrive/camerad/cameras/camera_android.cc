@@ -185,15 +185,6 @@ void CameraState::camera_close() {
   }
 }
 
-ACameraDevice_StateCallbacks *CameraState::get_device_listener() {
-  static ACameraDevice_stateCallbacks device_listener = {
-    .context = this,
-    .onDisconnected = ::OnDeviceDisconnect,
-    .onError = ::OnDeviceError,
-  };
-  return &device_listener;
-}
-
 // ** CameraDevice callbacks **
 
 static void OnDeviceDisconnect(void* /* ctx */, ACameraDevice* dev) {
@@ -226,17 +217,16 @@ static void OnDeviceError(void* /* ctx */, ACameraDevice* dev, int err) {
   }
 }
 
-// ** CaptureSession callbacks **
-
-ACameraCaptureSession_stateCallbacks *CameraState::get_capture_session_listener() {
-  static ACameraCaptureSession_stateCallbacks session_listener = {
+ACameraDevice_StateCallbacks *CameraState::get_device_listener() {
+  static ACameraDevice_stateCallbacks device_listener = {
     .context = this,
-    .onActive = ::OnSessionActive,
-    .onReady = ::OnSessionReady,
-    .onClosed = ::OnSessionClosed,
+    .onDisconnected = ::OnDeviceDisconnect,
+    .onError = ::OnDeviceError,
   };
-  return &session_listener;
+  return &device_listener;
 }
+
+// ** CaptureSession callbacks **
 
 void OnSessionClosed(void *context, ACameraCaptureSession *session) {
   LOGW("session %p closed", session);
@@ -248,6 +238,16 @@ void OnSessionReady(void *context, ACameraCaptureSession *session) {
 
 void OnSessionActive(void *context, ACameraCaptureSession *session) {
   LOGD("session %p active", session);
+}
+
+ACameraCaptureSession_stateCallbacks *CameraState::get_capture_session_listener() {
+  static ACameraCaptureSession_stateCallbacks session_listener = {
+    .context = this,
+    .onActive = ::OnSessionActive,
+    .onReady = ::OnSessionReady,
+    .onClosed = ::OnSessionClosed,
+  };
+  return &session_listener;
 }
 
 static void road_camera_thread(CameraState *s) {
