@@ -62,7 +62,7 @@ void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServe
   assert(camera_id_list->numCameras > 0); // no cameras found
 
   camera_id = camera_id_list->cameraIds[camera_index];
-  LOGD("camera_init: android camera_id %s", camera_id);
+  LOGD("camera_init: android camera_id \"%s\"", camera_id);
 
   ACameraManager_deleteCameraIdList(camera_id_list);
 
@@ -74,13 +74,13 @@ void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServe
 }
 
 void CameraState::camera_open() {
-  LOGD("camera_open camera_num=%d camera_id=%s", camera_num, camera_id);
+  LOGD("camera_open camera_num=%d camera_id=\"%s\"", camera_num, camera_id);
 
   ACameraManager *camera_manager = multi_cam_state->camera_manager;
 
   camera_status_t status = ACameraManager_openCamera(camera_manager, camera_id,
                                                      get_device_listener(), &camera_device);
-  LOGD("camera_open: open camera_id=%s status=%d", camera_id, status);
+  LOGD("camera_open: open camera_id=\"%s\" status=%d", camera_id, status);
   assert(status == ACAMERA_OK);
 
   ANativeWindow *window = image_reader->GetNativeWindow();
@@ -194,12 +194,12 @@ void CameraState::camera_close() {
 
 static void OnDeviceDisconnect(void* /* ctx */, ACameraDevice* dev) {
   std::string id(ACameraDevice_getId(dev));
-  LOGW("Device %s disconnected", id.c_str());
+  LOGW("Device \"%s\" disconnected", id.c_str());
 }
 
 static void OnDeviceError(void* /* ctx */, ACameraDevice* dev, int err) {
   std::string id(ACameraDevice_getId(dev));
-  LOGE("Camera Device Error: %#x, Device %s", err, id.c_str());
+  LOGE("Camera Device Error: %#x, Device \"%s\"", err, id.c_str());
 
   switch (err) {
     case ERROR_CAMERA_IN_USE:
@@ -294,7 +294,7 @@ void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_i
   // loop over cameras and print info
   for (int i = 0; i < camera_id_list->numCameras; i++) {
     const char* id = camera_id_list->cameraIds[i];
-    LOG("Camera index %d: id=%s", i, id);
+    LOG("Camera index %d: id=\"%s\"", i, id);
 
     ACameraMetadata *metadata = NULL;
     status = ACameraManager_getCameraCharacteristics(s->camera_manager,
@@ -313,7 +313,7 @@ void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_i
 
         status = ACameraMetadata_getConstEntry(metadata, tags[idx], &lensInfo);
         assert(status == ACAMERA_OK);  // failed to get camera metadata
-        LOG("Camera id=%s: lens facing=%d", id, lensInfo.data.i32[0]);
+        LOG("Camera id=\"%s\": lens facing=%d", id, lensInfo.data.i32[0]);
       }
     }
 
