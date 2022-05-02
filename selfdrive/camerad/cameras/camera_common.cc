@@ -90,11 +90,8 @@ void CameraBuf::init(cl_device_id device_id, cl_context context, CameraState *s,
   for (int i = 0; i < frame_buf_count; i++) {
     LOG("allocating frame %d, frame_size=%d", i, frame_size);
     camera_bufs[i].allocate(frame_size);
-    LOG("init camera_bufs[%d]", i);
     camera_bufs[i].init_cl(device_id, context);
   }
-
-  LOG("finished raw frame stuff");
 
   rgb_width = ci->frame_width;
   rgb_height = ci->frame_height;

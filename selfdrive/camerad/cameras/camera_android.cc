@@ -4,10 +4,10 @@
 const int ROAD_CAMERA_INDEX = util::getenv("ROADCAM_ID", 0);
 const int DRIVER_CAMERA_INDEX = util::getenv("DRIVERCAM_ID", 1);
 
-#define FRAME_WIDTH  1008
-#define FRAME_HEIGHT 756
-#define FRAME_WIDTH_FRONT  648
-#define FRAME_HEIGHT_FRONT 486
+#define FRAME_WIDTH  720
+#define FRAME_HEIGHT 480
+#define FRAME_WIDTH_FRONT  720
+#define FRAME_HEIGHT_FRONT 480
 
 extern ExitHandler do_exit;
 
@@ -74,7 +74,7 @@ void CameraState::camera_open() {
   ACameraManager *camera_manager = multi_cam_state->camera_manager;
 
   camera_status_t status = ACameraManager_openCamera(camera_manager, camera_id,
-                                            get_device_listener(), &camera_device);
+                                                     get_device_listener(), &camera_device);
   assert(status == ACAMERA_OK);
 
   ANativeWindow *window = image_reader->GetNativeWindow();
@@ -91,8 +91,7 @@ void CameraState::camera_open() {
   assert(status == ACAMERA_OK);
 
   // use TEMPLATE_RECORD for good quality and OK frame rate
-  status = ACameraDevice_createCaptureRequest(camera_device,
-                                                              TEMPLATE_RECORD, &capture_request);
+  status = ACameraDevice_createCaptureRequest(camera_device, TEMPLATE_RECORD, &capture_request);
   assert(status == ACAMERA_OK); // failed to create preview capture request
 
   status = ACaptureRequest_addTarget(capture_request, camera_output_target);
