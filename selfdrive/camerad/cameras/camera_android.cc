@@ -319,7 +319,7 @@ void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_i
       const char *format_name = format == AIMAGE_FORMAT_YUV_420_888 ? "YUV_420_888" : (format == AIMAGE_FORMAT_JPEG ? "JPEG" : "unknown");
       int32_t width = entry.data.i32[j + 1];
       int32_t height = entry.data.i32[j + 2];
-      LOG("Camera %s supports format %s: %dx%d", id, format_name, width, height);
+      LOG("Camera %s supports format %s (%d): %dx%d", id, format_name, format, width, height);
     }
 
     int32_t count = 0;
