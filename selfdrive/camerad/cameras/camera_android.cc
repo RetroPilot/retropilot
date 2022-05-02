@@ -31,7 +31,7 @@ CameraInfo cameras_supported[CAMERA_ID_MAX] = {
 };
 
 void CameraState::camera_init(VisionIpcServer *v, int camera_num_, unsigned int fps_, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type) {
-  LOG("camera_init camera_num=%d fps=%d", camera_num_, fps_);
+  LOGD("camera_init camera_num=%d fps=%d", camera_num_, fps_);
 
   assert(camera_num_ < std::size(cameras_supported));
   ci = cameras_supported[camera_num_];
@@ -40,6 +40,8 @@ void CameraState::camera_init(VisionIpcServer *v, int camera_num_, unsigned int 
   camera_num = camera_num_;
   fps = fps_;
   // buf.init(device_id, ctx, this, v, FRAME_BUF_COUNT, rgb_type, yuv_type);
+
+  LOGD("camera_init: getting camera list");
 
   // ** get camera list **
   ACameraManager *camera_manager = multi_camera_state->camera_manager;
@@ -60,6 +62,8 @@ void CameraState::camera_init(VisionIpcServer *v, int camera_num_, unsigned int 
     camera_orientation = 270;
   }
 
+  LOGD("camera_init: camera_id=%s", camera_id);
+
   // ** setup callbacks **
   device_state_callbacks.onDisconnected = CameraDeviceOnDisconnected;
   device_state_callbacks.onError = CameraDeviceOnError;
@@ -69,7 +73,7 @@ void CameraState::camera_init(VisionIpcServer *v, int camera_num_, unsigned int 
 }
 
 void CameraState::camera_open() {
-  LOG("camera_open");
+  LOGD("camera_open");
 
   ACameraManager *camera_manager = multi_camera_state->camera_manager;
 
@@ -101,7 +105,7 @@ void CameraState::camera_open() {
 }
 
 void CameraState::camera_run(float *ts) {
-  LOG("camera_run");
+  LOGD("camera_run");
 
   // TODO: implement transform
   // cv::Size size(ci.frame_width, ci.frame_height);
@@ -113,6 +117,7 @@ void CameraState::camera_run(float *ts) {
   while (!do_exit) {
     // ** get image **
     AImage *image = image_reader->GetLatestImage();
+    LOGD("camera_run: image=%p", image);
     if (image == NULL) continue;
 
     // ** debug **
@@ -135,7 +140,9 @@ void CameraState::camera_run(float *ts) {
     assert(status == AMEDIA_OK);  // failed to get image data
 
     auto &buffer = buf.camera_bufs[buf_idx];
+    LOGD("camera_run: clEnqueueWriteBuffer size=%d", size);
     CL_CHECK(clEnqueueWriteBuffer(buffer.copy_q, buffer.buf_cl, CL_TRUE, 0, size, data, 0, NULL, NULL));
+    LOGD("camera_run: clEnqueueWriteBuffer done");
 
     buf.queue(buf_idx);
 
@@ -145,7 +152,7 @@ void CameraState::camera_run(float *ts) {
 }
 
 void CameraState::camera_close() {
-  LOG("camera_close");
+  LOGD("camera_close");
 
   if (capture_request) {
     ACaptureRequest_free(capture_request);
@@ -177,7 +184,7 @@ void CameraState::camera_close() {
 }
 
 void CameraState::CameraDeviceOnDisconnected(void *context, ACameraDevice *device) {
-  LOG("Camera(id: %s) is diconnected", ACameraDevice_getId(device));
+  LOGW("Camera(id: %s) is diconnected", ACameraDevice_getId(device));
 }
 
 void CameraState::CameraDeviceOnError(void *context, ACameraDevice *device, int error) {
@@ -185,11 +192,11 @@ void CameraState::CameraDeviceOnError(void *context, ACameraDevice *device, int 
 }
 
 void CameraState::CaptureSessionOnReady(void *context, ACameraCaptureSession *session) {
-  LOG("Session is ready");
+  LOGD("Session is ready");
 }
 
 void CameraState::CaptureSessionOnActive(void *context, ACameraCaptureSession *session) {
-  LOG("Session is active");
+  LOGD("Session is active");
 }
 
 static void road_camera_thread(CameraState *s) {
