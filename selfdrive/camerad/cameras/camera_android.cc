@@ -40,7 +40,7 @@ void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServe
   camera_num = camera_index;
   fps = fps_;
   // TODO: fix me
-  // buf.init(device_id, ctx, this, v, FRAME_BUF_COUNT, rgb_type, yuv_type);
+  buf.init(device_id, ctx, this, v, FRAME_BUF_COUNT, rgb_type, yuv_type);
 
   // ASSUMPTION: IXM363 (road) is index[0] and IMX355 (driver) is index[1]
   // TODO: check that we actually need to rotate
@@ -69,7 +69,7 @@ void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServe
 }
 
 void CameraState::camera_open() {
-  LOGD("camera_open");
+  LOGD("camera_open %d", camera_num);
 
   ACameraManager *camera_manager = multi_cam_state->camera_manager;
 
@@ -107,7 +107,7 @@ void CameraState::camera_open() {
 }
 
 void CameraState::camera_run(float *ts) {
-  LOGD("camera_run");
+  LOGD("camera_run %d", camera_num);
 
   // TODO: implement transform
   // cv::Size size(ci.frame_width, ci.frame_height);
@@ -154,7 +154,7 @@ void CameraState::camera_run(float *ts) {
 }
 
 void CameraState::camera_close() {
-  LOGD("camera_close");
+  LOGD("camera_close %d", camera_num);
 
   if (capture_request) {
     ACaptureRequest_free(capture_request);
