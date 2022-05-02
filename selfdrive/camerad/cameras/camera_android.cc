@@ -311,14 +311,14 @@ void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_i
                                            &entry);
 
     // format of the data: format, width, height, input?, type int 32
-    for (int i = 0; i < entry.count; i += 4) {
-      int32_t input = entry.data.i32[i + 3];
-      int32_t format = entry.data.i32[i + 0];
+    for (int j = 0; j < entry.count; j += 4) {
+      int32_t input = entry.data.i32[j + 3];
+      int32_t format = entry.data.i32[j + 0];
       if (input) continue;
 
       const char *format_name = format == AIMAGE_FORMAT_YUV_420_888 ? "YUV_420_888" : (format == AIMAGE_FORMAT_JPEG ? "JPEG" : "unknown");
-      int32_t width = entry.data.i32[i + 1];
-      int32_t height = entry.data.i32[i + 2];
+      int32_t width = entry.data.i32[j + 1];
+      int32_t height = entry.data.i32[j + 2];
       LOG("Camera %s supports format %s: %dx%d", id, format_name, width, height);
     }
 
