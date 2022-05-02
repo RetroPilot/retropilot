@@ -74,7 +74,7 @@ void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServe
 }
 
 void CameraState::camera_open() {
-  LOGD("camera_open camera_num=%d camera_id=%d", camera_num, camera_id);
+  LOGD("camera_open camera_num=%d camera_id=%s", camera_num, camera_id);
 
   ACameraManager *camera_manager = multi_cam_state->camera_manager;
 
@@ -294,6 +294,7 @@ void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_i
   // loop over cameras and print info
   for (int i = 0; i < camera_id_list->numCameras; i++) {
     const char* id = camera_id_list->cameraIds[i];
+    LOG("Camera index %d: id=%s", i, id);
 
     ACameraMetadata *metadata = NULL;
     status = ACameraManager_getCameraCharacteristics(s->camera_manager,
@@ -312,7 +313,7 @@ void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_i
 
         status = ACameraMetadata_getConstEntry(metadata, tags[idx], &lensInfo);
         assert(status == ACAMERA_OK);  // failed to get camera metadata
-        LOG("Camera %s: lens facing %d", id, lensInfo.data.i32[0]);
+        LOG("Camera id=%s: lens facing=%d", id, lensInfo.data.i32[0]);
       }
     }
 
