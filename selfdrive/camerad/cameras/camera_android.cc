@@ -83,6 +83,7 @@ void CameraState::camera_open() {
   assert(status == ACAMERA_OK);
   ANativeWindow_acquire(window);
   status = ACaptureSessionOutput_create(window, &capture_session_output);
+  assert(status == ACAMERA_OK);
   status = ACaptureSessionOutputContainer_add(capture_session_output_container,
                                               capture_session_output);
   assert(status == ACAMERA_OK);
