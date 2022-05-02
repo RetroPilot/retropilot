@@ -1,8 +1,8 @@
 #include "selfdrive/camerad/cameras/camera_android.h"
 
 // id of the video capturing device
-const int ROAD_CAMERA_ID = util::getenv("ROADCAM_ID", 1);
-const int DRIVER_CAMERA_ID = util::getenv("DRIVERCAM_ID", 2);
+const int ROAD_CAMERA_INDEX = util::getenv("ROADCAM_ID", 0);
+const int DRIVER_CAMERA_INDEX = util::getenv("DRIVERCAM_ID", 1);
 
 #define FRAME_WIDTH  4032
 #define FRAME_HEIGHT 3024
@@ -30,37 +30,35 @@ CameraInfo cameras_supported[CAMERA_ID_MAX] = {
   },
 };
 
-void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServer *v, int camera_index, int camera_num_, unsigned int fps_, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type) {
-  LOGD("camera_init %d", camera_num);
+void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServer *v, int camera_index, int camera_id_, unsigned int fps_, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type) {
+  LOGD("camera_init: camera_index %d, camera_id_ %d", camera_index, camera_id_);
   multi_cam_state = multi_cam_state_;
-  assert(camera_num_ < std::size(cameras_supported));
-  ci = cameras_supported[camera_num_];
+  assert(camera_id_ < std::size(cameras_supported));
+  ci = cameras_supported[camera_id_];
   assert(ci.frame_width != 0);
 
-  camera_num = camera_num_;
   fps = fps_;
+  // TODO: fix me
   // buf.init(device_id, ctx, this, v, FRAME_BUF_COUNT, rgb_type, yuv_type);
-
-  // ** get camera list **
-  LOGD("camera_init: getting camera list");
-  ACameraManager *camera_manager = multi_cam_state->camera_manager;
-
-  ACameraIdList *camera_id_list = NULL;
-  camera_status_t camera_status = ACameraManager_getCameraIdList(camera_manager, &camera_id_list);
-  assert(camera_status == ACAMERA_OK); // failed to get camera id list
-
-  // ** set (android) camera id **
-  camera_id = camera_id_list->cameraIds[camera_index];
 
   // ASSUMPTION: IXM363 (road) is index[0] and IMX355 (driver) is index[1]
   // TODO: check that we actually need to rotate
-  if (camera_num == CAMERA_ID_IMX363) {
+  if (camera_id_ == CAMERA_ID_IMX363) {
     camera_orientation = 90;
-  } else if (camera_num == CAMERA_ID_IMX355) {
+  } else if (camera_id_ == CAMERA_ID_IMX355) {
     camera_orientation = 270;
   }
 
-  LOGD("camera_init: camera_id=%s", camera_id);
+  // ** get android camera id **
+  ACameraManager *camera_manager = multi_cam_state->camera_manager;
+
+  ACameraIdList *camera_id_list = NULL;
+  LOGD("camera_init: getting camera list");
+  camera_status_t camera_status = ACameraManager_getCameraIdList(camera_manager, &camera_id_list);
+  assert(camera_status == ACAMERA_OK); // failed to get camera id list
+
+  camera_id = camera_id_list->cameraIds[camera_index];
+  LOGD("camera_init: android camera_id %s", camera_id);
 
   // ** setup callbacks **
   device_state_callbacks.onDisconnected = CameraDeviceOnDisconnected;
@@ -229,10 +227,10 @@ void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_i
   s->camera_manager = ACameraManager_create();
 
   LOG("*** init road camera ***");
-  s->road_cam.camera_init(s, v, 0, CAMERA_ID_IMX363, 20, device_id, ctx,
+  s->road_cam.camera_init(s, v, ROAD_CAMERA_INDEX, CAMERA_ID_IMX363, 20, device_id, ctx,
                           VISION_STREAM_RGB_ROAD, VISION_STREAM_ROAD);
   LOG("*** init driver camera ***");
-  s->driver_cam.camera_init(s, v, 1, CAMERA_ID_IMX355, 10, device_id, ctx,
+  s->driver_cam.camera_init(s, v, DRIVER_CAMERA_INDEX, CAMERA_ID_IMX355, 10, device_id, ctx,
                             VISION_STREAM_RGB_DRIVER, VISION_STREAM_DRIVER);
 
   s->pm = new PubMaster({"roadCameraState", "driverCameraState", "thumbnail"});

@@ -27,7 +27,6 @@
 class CameraState {
 public:
   CameraInfo ci;
-  int camera_num;
   unsigned int fps;
   float digital_gain;
   CameraBuf buf;
@@ -52,7 +51,7 @@ private:
   ImageReader *image_reader;
 
 public:
-  void camera_init(MultiCameraState *multi_cam_state_, VisionIpcServer *v, int camera_index, int camera_num, unsigned int fps, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type);
+  void camera_init(MultiCameraState *multi_cam_state_, VisionIpcServer *v, int camera_index, int camera_id_, unsigned int fps, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type);
   void camera_open();
   void camera_run(float *ts);
   void camera_close();
