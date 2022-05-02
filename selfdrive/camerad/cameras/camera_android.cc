@@ -61,8 +61,8 @@ void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServe
   LOGD("camera_init: found %d cameras", camera_id_list->numCameras);
   assert(camera_id_list->numCameras > 0); // no cameras found
 
-  camera_id = camera_id_list->cameraIds[camera_index];
-  LOGD("camera_init: android camera_id \"%s\"", camera_id);
+  // copy camera id from camera_id_list
+  camera_id = std::string(camera_id_list->cameraIds[camera_index]).c_str();
 
   ACameraManager_deleteCameraIdList(camera_id_list);
 
