@@ -224,9 +224,11 @@ void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_i
   s->camera_manager = ACameraManager_create();
 
   LOG("*** init road camera ***");
-  s->road_cam.camera_init(v, ROAD_CAMERA_ID, 20, device_id, ctx, VISION_STREAM_RGB_ROAD, VISION_STREAM_ROAD);
+  s->road_cam.camera_init(v, CAMERA_ID_IMX363, 20, device_id, ctx,
+                          VISION_STREAM_RGB_ROAD, VISION_STREAM_ROAD);
   LOG("*** init driver camera ***");
-  s->driver_cam.camera_init(v, DRIVER_CAMERA_ID, 10, device_id, ctx, VISION_STREAM_RGB_DRIVER, VISION_STREAM_DRIVER);
+  s->driver_cam.camera_init(v, CAMERA_ID_IMX355, 10, device_id, ctx,
+                            VISION_STREAM_RGB_DRIVER, VISION_STREAM_DRIVER);
 
   s->pm = new PubMaster({"roadCameraState", "driverCameraState", "thumbnail"});
 }
