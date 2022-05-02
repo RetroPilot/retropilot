@@ -48,7 +48,7 @@ private:
   int32_t camera_orientation;
   const char *camera_id;
 
-  ImageFormat image_format{0, 0};
+  ImageFormat *image_format;
   ImageReader *image_reader;
 
 public:

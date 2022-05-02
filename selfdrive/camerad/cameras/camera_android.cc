@@ -66,7 +66,10 @@ void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServe
   device_state_callbacks.onError = CameraDeviceOnError;
 
   // ** create image reader **
-  image_reader = new ImageReader(&image_format, AIMAGE_FORMAT_YUV_420_888);
+  image_format = new ImageFormat();
+  image_format->width = ci.frame_width;
+  image_format->height = ci.frame_height;
+  image_reader = new ImageReader(image_format, AIMAGE_FORMAT_YUV_420_888);
 }
 
 void CameraState::camera_open() {
