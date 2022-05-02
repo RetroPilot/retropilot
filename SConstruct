@@ -78,10 +78,9 @@ lenv = {
 rpath = lenv["LD_LIBRARY_PATH"].copy()
 
 if arch == "aarch64" or arch == "larch64":
-  lenv["LD_LIBRARY_PATH"] += ['/data/data/com.termux/files/usr/lib']
-
   if arch == "aarch64":
     # android
+    lenv["LD_LIBRARY_PATH"] += ['/system/lib64', '/data/data/com.termux/files/usr/lib']
     lenv["ANDROID_DATA"] = os.environ['ANDROID_DATA']
     lenv["ANDROID_ROOT"] = os.environ['ANDROID_ROOT']
 
