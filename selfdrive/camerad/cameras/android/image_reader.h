@@ -20,7 +20,7 @@ public:
 
   void DeleteImage(AImage *image);
 
-  void OnImageCallback(void *ctx, AImageReader *reader);
+  static void OnImageCallback(void *context, AImageReader *reader);
 
 private:
   AImageReader *reader_;

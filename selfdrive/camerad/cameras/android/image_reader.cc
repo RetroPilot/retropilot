@@ -12,11 +12,11 @@ ImageReader::ImageReader(ImageFormat *res, enum AIMAGE_FORMATS format)
 
   LOGD("ImageReader: created AImageReader");
 
-  // AImageReader_ImageListener listener{
-  //   .context = this,
-  //   .onImageAvailable = OnImageCallback,
-  // };
-  // AImageReader_setImageListener(reader_, &listener);
+  AImageReader_ImageListener listener{
+    .context = this,
+    .onImageAvailable = OnImageCallback,
+  };
+  AImageReader_setImageListener(reader_, &listener);
 
   // assuming 4 bit per pixel max
   LOGD("ImageReader: Image Buffer Size: %d", res->width * res->height * 4);
@@ -65,4 +65,8 @@ void ImageReader::DeleteImage(AImage *image) {
   if (image) {
     AImage_delete(image);
   }
+}
+
+void ImageReader::OnImageCallback(void *context, AImageReader *reader) {
+  LOGD("ImageReader: OnImageCallback");
 }
