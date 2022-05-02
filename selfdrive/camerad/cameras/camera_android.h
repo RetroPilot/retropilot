@@ -26,8 +26,6 @@
 
 class CameraState {
 public:
-  MultiCameraState *multi_camera_state;
-
   CameraInfo ci;
   int camera_num;
   unsigned int fps;
@@ -35,6 +33,8 @@ public:
   CameraBuf buf;
 
 private:
+  MultiCameraState *multi_cam_state;
+
   ACameraDevice *camera_device;
   ACaptureRequest *capture_request;
   ACameraOutputTarget *camera_output_target;
@@ -52,7 +52,7 @@ private:
   ImageReader *image_reader;
 
 public:
-  void camera_init(VisionIpcServer *v, int camera_num, unsigned int fps, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type);
+  void camera_init(MultiCameraState *multi_cam_state_, VisionIpcServer *v, int camera_index, int camera_num, unsigned int fps, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type);
   void camera_open();
   void camera_run(float *ts);
   void camera_close();

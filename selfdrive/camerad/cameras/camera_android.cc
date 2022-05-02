@@ -30,9 +30,9 @@ CameraInfo cameras_supported[CAMERA_ID_MAX] = {
   },
 };
 
-void CameraState::camera_init(VisionIpcServer *v, int camera_num_, unsigned int fps_, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type) {
-  LOGD("camera_init camera_num=%d fps=%d", camera_num_, fps_);
-
+void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServer *v, int camera_index, int camera_num_, unsigned int fps_, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type) {
+  LOGD("camera_init %d", camera_num);
+  multi_cam_state = multi_cam_state_;
   assert(camera_num_ < std::size(cameras_supported));
   ci = cameras_supported[camera_num_];
   assert(ci.frame_width != 0);
@@ -41,26 +41,22 @@ void CameraState::camera_init(VisionIpcServer *v, int camera_num_, unsigned int 
   fps = fps_;
   // buf.init(device_id, ctx, this, v, FRAME_BUF_COUNT, rgb_type, yuv_type);
 
-  LOGD("camera_init: getting camera list");
-
   // ** get camera list **
-  ACameraManager *camera_manager = multi_camera_state->camera_manager;
+  LOGD("camera_init: getting camera list");
+  ACameraManager *camera_manager = multi_cam_state->camera_manager;
 
   ACameraIdList *camera_id_list = NULL;
-  LOGD("camera_init: a");
   camera_status_t camera_status = ACameraManager_getCameraIdList(camera_manager, &camera_id_list);
-  LOGD("camera_init: b %d", camera_status);
   assert(camera_status == ACAMERA_OK); // failed to get camera id list
 
   // ** set (android) camera id **
+  camera_id = camera_id_list->cameraIds[camera_index];
 
   // ASSUMPTION: IXM363 (road) is index[0] and IMX355 (driver) is index[1]
   // TODO: check that we actually need to rotate
   if (camera_num == CAMERA_ID_IMX363) {
-    camera_id = camera_id_list->cameraIds[0];
     camera_orientation = 90;
   } else if (camera_num == CAMERA_ID_IMX355) {
-    camera_id = camera_id_list->cameraIds[1];
     camera_orientation = 270;
   }
 
@@ -77,7 +73,7 @@ void CameraState::camera_init(VisionIpcServer *v, int camera_num_, unsigned int 
 void CameraState::camera_open() {
   LOGD("camera_open");
 
-  ACameraManager *camera_manager = multi_camera_state->camera_manager;
+  ACameraManager *camera_manager = multi_cam_state->camera_manager;
 
   ACameraManager_openCamera(camera_manager, camera_id,
                                             &device_state_callbacks, &camera_device);
@@ -233,10 +229,10 @@ void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_i
   s->camera_manager = ACameraManager_create();
 
   LOG("*** init road camera ***");
-  s->road_cam.camera_init(v, CAMERA_ID_IMX363, 20, device_id, ctx,
+  s->road_cam.camera_init(s, v, 0, CAMERA_ID_IMX363, 20, device_id, ctx,
                           VISION_STREAM_RGB_ROAD, VISION_STREAM_ROAD);
   LOG("*** init driver camera ***");
-  s->driver_cam.camera_init(v, CAMERA_ID_IMX355, 10, device_id, ctx,
+  s->driver_cam.camera_init(s, v, 1, CAMERA_ID_IMX355, 10, device_id, ctx,
                             VISION_STREAM_RGB_DRIVER, VISION_STREAM_DRIVER);
 
   s->pm = new PubMaster({"roadCameraState", "driverCameraState", "thumbnail"});
