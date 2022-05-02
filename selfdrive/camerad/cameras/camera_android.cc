@@ -47,7 +47,9 @@ void CameraState::camera_init(VisionIpcServer *v, int camera_num_, unsigned int 
   ACameraManager *camera_manager = multi_camera_state->camera_manager;
 
   ACameraIdList *camera_id_list = NULL;
+  LOGD("camera_init: a");
   camera_status_t camera_status = ACameraManager_getCameraIdList(camera_manager, &camera_id_list);
+  LOGD("camera_init: b %d", camera_status);
   assert(camera_status == ACAMERA_OK); // failed to get camera id list
 
   // ** set (android) camera id **
