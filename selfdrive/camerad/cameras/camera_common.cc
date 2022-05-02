@@ -94,6 +94,8 @@ void CameraBuf::init(cl_device_id device_id, cl_context context, CameraState *s,
     camera_bufs[i].init_cl(device_id, context);
   }
 
+  LOG("finished raw frame stuff");
+
   rgb_width = ci->frame_width;
   rgb_height = ci->frame_height;
 
@@ -105,9 +107,11 @@ void CameraBuf::init(cl_device_id device_id, cl_context context, CameraState *s,
 
   yuv_transform = get_model_yuv_transform(ci->bayer);
 
+  LOG("allocating rgb");
   vipc_server->create_buffers(rgb_type, UI_BUF_COUNT, true, rgb_width, rgb_height);
   rgb_stride = vipc_server->get_buffer(rgb_type)->stride;
 
+  LOG("allocating yuv");
   vipc_server->create_buffers(yuv_type, YUV_BUFFER_COUNT, false, rgb_width, rgb_height);
 
   if (ci->bayer) {
