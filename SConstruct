@@ -110,6 +110,7 @@ if arch == "aarch64" or arch == "larch64":
   else:
     rpath = []
     libpath = [
+      "/system/lib64",
       "#third_party/snpe/aarch64",
       "#third_party/libyuv/lib",
       "/system/vendor/lib64"
