@@ -4,10 +4,10 @@
 const int ROAD_CAMERA_INDEX = util::getenv("ROADCAM_ID", 0);
 const int DRIVER_CAMERA_INDEX = util::getenv("DRIVERCAM_ID", 1);
 
-#define FRAME_WIDTH  4032
-#define FRAME_HEIGHT 3024
-#define FRAME_WIDTH_FRONT  2592
-#define FRAME_HEIGHT_FRONT 1944
+#define FRAME_WIDTH  1008
+#define FRAME_HEIGHT 756
+#define FRAME_WIDTH_FRONT  648
+#define FRAME_HEIGHT_FRONT 486
 
 extern ExitHandler do_exit;
 
