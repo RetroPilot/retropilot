@@ -292,11 +292,11 @@ void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_i
 
   // loop over cameras and print info
   for (int i = 0; i < camera_id_list->numCameras; i++) {
-    const char* id = cameraIds->cameraIds[i];
+    const char* id = camera_id_list->cameraIds[i];
 
     ACameraMetadata *metadata = NULL;
     status = ACameraManager_getCameraCharacteristics(s->camera_manager,
-                                                     camera_id_list->cameraIds[i],
+                                                     id,
                                                      &metadata);
     assert(status == ACAMERA_OK);  // failed to get camera characteristics
 
