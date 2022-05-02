@@ -74,13 +74,13 @@ void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServe
 }
 
 void CameraState::camera_open() {
-  LOGD("camera_open %d", camera_num);
+  LOGD("camera_open camera_num=%d camera_id=%d", camera_num, camera_id);
 
   ACameraManager *camera_manager = multi_cam_state->camera_manager;
 
   camera_status_t status = ACameraManager_openCamera(camera_manager, camera_id,
                                                      get_device_listener(), &camera_device);
-  LOGD("camera_open: open camera %s status %d", camera_id, status);
+  LOGD("camera_open: open camera_id=%s status=%d", camera_id, status);
   assert(status == ACAMERA_OK);
 
   ANativeWindow *window = image_reader->GetNativeWindow();
