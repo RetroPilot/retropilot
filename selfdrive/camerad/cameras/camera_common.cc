@@ -88,7 +88,9 @@ void CameraBuf::init(cl_device_id device_id, cl_context context, CameraState *s,
   camera_bufs_metadata = std::make_unique<FrameMetadata[]>(frame_buf_count);
 
   for (int i = 0; i < frame_buf_count; i++) {
+    LOG("allocating frame %d, frame_size=%d", i, frame_size);
     camera_bufs[i].allocate(frame_size);
+    LOG("init camera_bufs[%d]", i);
     camera_bufs[i].init_cl(device_id, context);
   }
 
