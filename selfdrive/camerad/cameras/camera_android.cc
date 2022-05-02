@@ -39,7 +39,7 @@ void CameraState::camera_init(VisionIpcServer *v, int camera_num_, unsigned int 
 
   camera_num = camera_num_;
   fps = fps_;
-  buf.init(device_id, ctx, this, v, FRAME_BUF_COUNT, rgb_type, yuv_type);
+  // buf.init(device_id, ctx, this, v, FRAME_BUF_COUNT, rgb_type, yuv_type);
 
   // ** get camera list **
   ACameraManager *camera_manager = multi_camera_state->camera_manager;
