@@ -61,10 +61,10 @@ void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServe
   LOGD("camera_init: found %d cameras", camera_id_list->numCameras);
   assert(camera_id_list->numCameras > 0); // no cameras found
 
-  // copy camera id from camera_id_list
-  camera_id = std::string(camera_id_list->cameraIds[camera_index]).c_str();
+  camera_id = camera_id_list->cameraIds[camera_index];
 
-  ACameraManager_deleteCameraIdList(camera_id_list);
+  // TODO: after we figure out how to copy the camera_id
+  // ACameraManager_deleteCameraIdList(camera_id_list);
 
   // ** create image reader **
   image_format = new ImageFormat();
