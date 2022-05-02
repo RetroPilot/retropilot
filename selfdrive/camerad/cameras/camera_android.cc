@@ -77,31 +77,39 @@ void CameraState::camera_open() {
 
   ACameraManager *camera_manager = multi_cam_state->camera_manager;
 
-  ACameraManager_openCamera(camera_manager, camera_id,
+  camera_status_t status = ACameraManager_openCamera(camera_manager, camera_id,
                                             &device_state_callbacks, &camera_device);
+  assert(status == ACAMERA_OK);
 
   ANativeWindow *window = image_reader->GetNativeWindow();
 
-  ACaptureSessionOutputContainer_create(&capture_session_output_container);
+  status = ACaptureSessionOutputContainer_create(&capture_session_output_container);
+  assert(status == ACAMERA_OK);
   ANativeWindow_acquire(window);
-  ACaptureSessionOutput_create(window, &capture_session_output);
-  ACaptureSessionOutputContainer_add(capture_session_output_container,
-                                     capture_session_output);
-  ACameraOutputTarget_create(window, &camera_output_target);
+  status = ACaptureSessionOutput_create(window, &capture_session_output);
+  status = ACaptureSessionOutputContainer_add(capture_session_output_container,
+                                              capture_session_output);
+  assert(status == ACAMERA_OK);
+  status = ACameraOutputTarget_create(window, &camera_output_target);
+  assert(status == ACAMERA_OK);
 
   // use TEMPLATE_RECORD for good quality and OK frame rate
-  camera_status_t status = ACameraDevice_createCaptureRequest(camera_device,
+  status = ACameraDevice_createCaptureRequest(camera_device,
                                                               TEMPLATE_RECORD, &capture_request);
   assert(status == ACAMERA_OK); // failed to create preview capture request
 
-  ACaptureRequest_addTarget(capture_request, camera_output_target);
+  status = ACaptureRequest_addTarget(capture_request, camera_output_target);
+  assert(status == ACAMERA_OK);
 
   capture_session_state_callbacks.onReady = CaptureSessionOnReady;
   capture_session_state_callbacks.onActive = CaptureSessionOnActive;
-  ACameraDevice_createCaptureSession(camera_device, capture_session_output_container,
-                                     &capture_session_state_callbacks, &capture_session);
+  capture_session_state_callbacks.onClosed = CaptureSessionOnClosed;
+  status = ACameraDevice_createCaptureSession(camera_device, capture_session_output_container,
+                                              &capture_session_state_callbacks, &capture_session);
+  assert(status == ACAMERA_OK);
 
-  ACameraCaptureSession_setRepeatingRequest(capture_session, NULL, 1, &capture_request, NULL);
+  status = ACameraCaptureSession_setRepeatingRequest(capture_session, NULL, 1, &capture_request, NULL);
+  assert(status == ACAMERA_OK);
 }
 
 void CameraState::camera_run(float *ts) {
@@ -192,11 +200,15 @@ void CameraState::CameraDeviceOnError(void *context, ACameraDevice *device, int 
 }
 
 void CameraState::CaptureSessionOnReady(void *context, ACameraCaptureSession *session) {
-  LOGD("Session is ready");
+  LOGD("Capture Session is ready");
 }
 
 void CameraState::CaptureSessionOnActive(void *context, ACameraCaptureSession *session) {
-  LOGD("Session is active");
+  LOGD("Capture Session is active");
+}
+
+void CameraState::CaptureSessionOnClosed(void *context, ACameraCaptureSession *session) {
+  LOGW("Capture Session is closed");
 }
 
 static void road_camera_thread(CameraState *s) {

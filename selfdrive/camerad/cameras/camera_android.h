@@ -64,6 +64,7 @@ public:
   // ** Capture Callbacks **
   static void CaptureSessionOnReady(void *context, ACameraCaptureSession *session);
   static void CaptureSessionOnActive(void *context, ACameraCaptureSession *session);
+  static void CaptureSessionOnClosed(void *context, ACameraCaptureSession *session);
 };
 
 
