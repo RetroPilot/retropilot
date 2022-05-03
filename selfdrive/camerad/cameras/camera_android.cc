@@ -94,7 +94,7 @@ void CameraState::camera_open() {
 
   // yuv window
   ANativeWindow *window = NULL;
-  media_status_t media_status = AImageReader_getWindow(yuv_reader, &window);
+  media_status = AImageReader_getWindow(yuv_reader, &window);
   assert(media_status == AMEDIA_OK);  // could not get ANativeWindow
   ANativeWindow_acquire(window);
 
