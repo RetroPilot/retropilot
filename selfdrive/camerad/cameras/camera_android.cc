@@ -124,6 +124,7 @@ void CameraState::start_preview(bool start) {
 
   if (start) {
     status = ACameraCaptureSession_setRepeatingRequest(capture_session, nullptr, 1, &capture_request, nullptr);
+    if (status) LOGE("ACameraCaptureSession_setRepeatingRequest failed: %d", status);
     assert(status == ACAMERA_OK);
   } else {
     status = ACameraCaptureSession_stopRepeating(capture_session);
