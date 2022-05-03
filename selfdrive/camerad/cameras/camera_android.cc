@@ -206,6 +206,11 @@ void CameraState::camera_close() {
     ACaptureSessionOutputContainer_free(capture_session_output_container);
     capture_session_output_container = NULL;
   }
+
+  if (yuv_reader) {
+    AImageReader_delete(yuv_reader);
+    yuv_reader = NULL;
+  }
 }
 
 // ** CameraDevice callbacks **
