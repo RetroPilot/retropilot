@@ -205,15 +205,17 @@ void CameraState::camera_run(float *ts) {
 void CameraState::camera_close() {
   LOGD("camera_close %d", camera_num);
 
-  if (capture_request) {
-    ACaptureRequest_free(capture_request);
-    capture_request = NULL;
+  if (capture_session) {
+    ACameraCaptureSession_close(capture_session);
+    capture_session = NULL;
   }
 
-  if (camera_output_target) {
-    ACameraOutputTarget_free(camera_output_target);
-    camera_output_target = NULL;
-  }
+  ACaptureRequest_removeTarget(capture_request, camera_output_target);
+  ACameraOutputTarget_free(camera_output_target);
+  camera_output_target = NULL;
+
+  ACaptureRequest_free(capture_request);
+  capture_request = NULL;
 
   if (camera_device) {
     ACameraDevice_close(camera_device);
