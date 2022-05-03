@@ -58,73 +58,93 @@ void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServe
 
   LOGD("camera_init: getting camera list");
   camera_status_t camera_status = ACameraManager_getCameraIdList(camera_manager, &camera_id_list);
-  assert(camera_status == ACAMERA_OK); // failed to get camera id list
+  assert(camera_status == ACAMERA_OK);
 
   LOGD("camera_init: found %d cameras", camera_id_list->numCameras);
-  assert(camera_id_list->numCameras > 0); // no cameras found
+  assert(camera_id_list->numCameras > 0);
 
+  // note: we assume that the first camera is the road facing camera and the
+  // second is the driver facing camera
   camera_id = camera_id_list->cameraIds[camera_index];
 
   // TODO: after we figure out how to copy the camera_id
   // ACameraManager_deleteCameraIdList(camera_id_list);
 }
 
+void create_image_reader(CameraInfo *ci, AIMAGE_FORMATS format, AImageReader **reader, ANativeWindow **window) {
+  media_status_t status;
+
+  // new image reader
+  status = AImageReader_new(ci->frame_width, ci->frame_height, format, 1, reader);
+  assert(*reader && status == ACAMERA_OK);
+
+  // get native window
+  status = AImageReader_getWindow(*reader, window);
+  assert(*window && status == AMEDIA_OK);
+}
+
+void open_camera(ACameraManager *manager, const char *camera_id, ACameraDevice_StateCallbacks *listener, ACameraDevice **device) {
+  camera_status_t status;
+
+  // open camera device
+  status = ACameraManager_openCamera(manager, camera_id, listener, device);
+  assert(*device && status == ACAMERA_OK);
+}
+
+void CameraState::create_session(ANativeWindow *window, ACameraDevice *device) {
+  camera_status_t status;
+
+  // create output container
+  status = ACaptureSessionOutputContainer_create(&capture_session_output_container);
+  assert(capture_session_output_container && status == ACAMERA_OK);
+
+  // create output to native window
+  ANativeWindow_acquire(window);
+  status = ACaptureSessionOutput_create(window, &capture_session_output);
+  assert(capture_session_output && status == ACAMERA_OK);
+  status = ACaptureSessionOutputContainer_add(capture_session_output_container, capture_session_output);
+  assert(status == ACAMERA_OK);
+  status = ACameraOutputTarget_create(window, &camera_output_target);
+  assert(camera_output_target && status == ACAMERA_OK);
+  status = ACameraDevice_createCaptureRequest(device, TEMPLATE_RECORD, &capture_request);
+  assert(capture_request && status == ACAMERA_OK);
+  status = ACaptureRequest_addTarget(capture_request, camera_output_target);
+  assert(status == ACAMERA_OK);
+
+  // create capture session
+  status = ACameraDevice_createCaptureSession(device, capture_session_output_container,
+                                              get_session_listener(), &capture_session);
+  assert(capture_session && status == ACAMERA_OK);
+
+  // TODO: manual mode
+}
+
+void CameraState::start_preview(bool start) {
+  camera_status_t status;
+
+  if (start) {
+    status = ACameraCaptureSession_setRepeatingRequest(capture_session, nullptr, 1, &capture_request, nullptr);
+    assert(status == ACAMERA_OK);
+  } else {
+    status = ACameraCaptureSession_stopRepeating(capture_session);
+    assert(status == ACAMERA_OK);
+  }
+}
+
 void CameraState::camera_open() {
   LOGD("camera_open camera_num=%d camera_id=\"%s\"", camera_num, camera_id);
 
-  // ** create image reader **
-  media_status_t media_status = AImageReader_new(ci.frame_width, ci.frame_height,
-                                                 AIMAGE_FORMAT_YUV_420_888,
-                                                 1, &yuv_reader);
-  if (media_status) LOGD("camera_init: AImageReader_new status %d", media_status);
-  assert(yuv_reader && media_status == AMEDIA_OK); // failed to create AImageReader
+  ACameraManager *manager = multi_cam_state->camera_manager;
 
-  // ** open camera **
-
-  ACameraManager *camera_manager = multi_cam_state->camera_manager;
-
-  camera_status_t camera_status = ACameraManager_openCamera(camera_manager, camera_id,
-                                                            get_device_listener(), &camera_device);
-  LOGD("camera_open: open camera_id=\"%s\" status=%d", camera_id, camera_status);
-  assert(camera_status == ACAMERA_OK);
-
-  // ** create capture session container **
-  camera_status = ACaptureSessionOutputContainer_create(&capture_session_output_container);
-  assert(camera_status == ACAMERA_OK);
-
-  // yuv window
-  ANativeWindow *window = NULL;
-  media_status = AImageReader_getWindow(yuv_reader, &window);
-  assert(media_status == AMEDIA_OK);  // could not get ANativeWindow
-  ANativeWindow_acquire(window);
-
-  camera_status = ACaptureSessionOutput_create(window, &capture_session_output);
-  assert(camera_status == ACAMERA_OK);
-  camera_status = ACaptureSessionOutputContainer_add(capture_session_output_container,
-                                                     capture_session_output);
-  assert(camera_status == ACAMERA_OK);
-  camera_status = ACameraOutputTarget_create(window, &camera_output_target);
-  assert(camera_status == ACAMERA_OK);
-
-  // use TEMPLATE_RECORD for good quality and OK frame rate
-  camera_status = ACameraDevice_createCaptureRequest(camera_device, TEMPLATE_PREVIEW, &capture_request);
-  assert(camera_status == ACAMERA_OK); // failed to create preview capture request
-
-  camera_status = ACaptureRequest_addTarget(capture_request, camera_output_target);
-  assert(camera_status == ACAMERA_OK);
-
-  // create capture session
-  camera_status = ACameraDevice_createCaptureSession(camera_device, capture_session_output_container,
-                                                     get_session_listener(), &capture_session);
-  assert(camera_status == ACAMERA_OK);
-
-  // set repeating request
-  camera_status = ACameraCaptureSession_setRepeatingRequest(capture_session, NULL, 1, &capture_request, NULL);
-  assert(camera_status == ACAMERA_OK);
+  create_image_reader(&ci, AIMAGE_FORMAT_YUV_420_888, &yuv_reader, &yuv_window);
+  open_camera(manager, camera_id, get_device_listener(), &camera_device);
+  create_session(yuv_window, camera_device);
 }
 
 void CameraState::camera_run(float *ts) {
   LOGD("camera_run %d", camera_num);
+
+  start_preview(true);
 
   // TODO: implement transform
   // cv::Size size(ci.frame_width, ci.frame_height);
@@ -177,6 +197,8 @@ void CameraState::camera_run(float *ts) {
     ++frame_id;
     buf_idx = (buf_idx + 1) % FRAME_BUF_COUNT;
   }
+
+  start_preview(false);
 }
 
 void CameraState::camera_close() {

@@ -39,22 +39,26 @@ private:
   MultiCameraState *multi_cam_state;
 
   ACameraDevice *camera_device;
-  ACaptureRequest *capture_request;
-  ACameraOutputTarget *camera_output_target;
-  ACaptureSessionOutput *capture_session_output;
-  ACaptureSessionOutputContainer *capture_session_output_container;
-  ACameraCaptureSession *capture_session;
-
   int32_t camera_orientation;
   const char *camera_id;
 
   AImageReader *yuv_reader;
+  ANativeWindow *yuv_window;
+
+  ACaptureSessionOutputContainer *capture_session_output_container;
+  ACaptureRequest *capture_request;
+  ACaptureSessionOutput *capture_session_output;
+  ACameraOutputTarget *camera_output_target;
+  ACameraCaptureSession *capture_session;
 
 public:
   void camera_init(MultiCameraState *multi_cam_state_, VisionIpcServer *v, int camera_index, int camera_id_, unsigned int fps, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type);
   void camera_open();
   void camera_run(float *ts);
   void camera_close();
+
+  void create_session(ANativeWindow *window, ACameraDevice *device);
+  void start_preview(bool start);
 
   ACameraDevice_StateCallbacks *get_device_listener();
   ACameraCaptureSession_stateCallbacks *get_session_listener();
