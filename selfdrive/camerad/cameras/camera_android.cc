@@ -107,7 +107,7 @@ void CameraState::camera_open() {
   assert(camera_status == ACAMERA_OK);
 
   // use TEMPLATE_RECORD for good quality and OK frame rate
-  camera_status = ACameraDevice_createCaptureRequest(camera_device, TEMPLATE_RECORD, &capture_request);
+  camera_status = ACameraDevice_createCaptureRequest(camera_device, TEMPLATE_PREVIEW, &capture_request);
   assert(camera_status == ACAMERA_OK); // failed to create preview capture request
 
   camera_status = ACaptureRequest_addTarget(capture_request, camera_output_target);
