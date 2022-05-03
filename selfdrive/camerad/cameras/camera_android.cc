@@ -162,6 +162,7 @@ void CameraState::camera_run(float *ts) {
       if (status != AMEDIA_IMGREADER_NO_BUFFER_AVAILABLE) {
         LOGW("camera_run: AImageReader_acquireLatestImage status %d", status);
       }
+      sleep(1);
       continue;
     }
     LOGD("camera_run: image=%p", image);
@@ -171,11 +172,9 @@ void CameraState::camera_run(float *ts) {
     AImage_getFormat(image, &format);
     assert(format == AIMAGE_FORMAT_YUV_420_888);
 
-    int32_t planes = 0;
-    AImage_getNumberOfPlanes(image, &planes);
-    assert(planes == 3);
-
-    // cv::warpPerspective(frame_mat, transformed_mat, transform, size, cv::INTER_LINEAR, cv::BORDER_CONSTANT, 0);
+    int32_t planeCount = 0;
+    AImage_getNumberOfPlanes(image, &planeCount);
+    assert(planeCount == 3);
 
     buf.camera_bufs_metadata[buf_idx] = {.frame_id = frame_id};
 
@@ -190,10 +189,10 @@ void CameraState::camera_run(float *ts) {
     CL_CHECK(clEnqueueWriteBuffer(buffer.copy_q, buffer.buf_cl, CL_TRUE, 0, size, data, 0, NULL, NULL));
     LOGD("camera_run: clEnqueueWriteBuffer done");
 
-    buf.queue(buf_idx);
-
     // ** release image **
     AImage_delete(image);
+
+    buf.queue(buf_idx);
 
     ++frame_id;
     buf_idx = (buf_idx + 1) % FRAME_BUF_COUNT;
@@ -306,6 +305,7 @@ ACameraCaptureSession_stateCallbacks *CameraState::get_session_listener() {
   return &session_listener;
 }
 
+#if ROAD
 static void road_camera_thread(CameraState *s) {
   util::set_thread_name("android_road_camera_thread");
 
@@ -319,6 +319,7 @@ static void road_camera_thread(CameraState *s) {
   //                 0.0, 0.0, 1.0};
   s->camera_run(ts);
 }
+#endif
 
 void driver_camera_thread(CameraState *s) {
   util::set_thread_name("android_driver_camera_thread");
@@ -427,9 +428,11 @@ void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_i
   // free camera id list
   ACameraManager_deleteCameraIdList(camera_id_list);
 
+#if false
   LOG("*** init road camera ***");
   s->road_cam.camera_init(s, v, ROAD_CAMERA_INDEX, CAMERA_ID_IMX363, 20, device_id, ctx,
                           VISION_STREAM_RGB_ROAD, VISION_STREAM_ROAD);
+#endif
   LOG("*** init driver camera ***");
   s->driver_cam.camera_init(s, v, DRIVER_CAMERA_INDEX, CAMERA_ID_IMX355, 10, device_id, ctx,
                             VISION_STREAM_RGB_DRIVER, VISION_STREAM_DRIVER);
@@ -440,15 +443,19 @@ void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_i
 void camera_autoexposure(CameraState *s, float grey_frac) {}
 
 void cameras_open(MultiCameraState *s) {
+#if false
   LOG("*** open road camera ***");
   s->road_cam.camera_open();
+#endif
   LOG("*** open driver camera ***");
   s->driver_cam.camera_open();
 }
 
 void cameras_close(MultiCameraState *s) {
+#if false
   LOG("*** close road camera ***");
   s->road_cam.camera_close();
+#endif
   LOG("*** close driver camera ***");
   s->driver_cam.camera_close();
   delete s->pm;
@@ -462,6 +469,7 @@ void process_driver_camera(MultiCameraState *s, CameraState *c, int cnt) {
   s->pm->send("driverCameraState", msg);
 }
 
+#if false
 void process_road_camera(MultiCameraState *s, CameraState *c, int cnt) {
   const CameraBuf *b = &c->buf;
   MessageBuilder msg;
@@ -471,19 +479,26 @@ void process_road_camera(MultiCameraState *s, CameraState *c, int cnt) {
   framed.setTransform(b->yuv_transform.v);
   s->pm->send("roadCameraState", msg);
 }
+#endif
 
 void cameras_run(MultiCameraState *s) {
   LOG("-- Starting threads");
   std::vector<std::thread> threads;
+#if false
   threads.push_back(start_process_thread(s, &s->road_cam, process_road_camera));
+#endif
   threads.push_back(start_process_thread(s, &s->driver_cam, process_driver_camera));
 
+#if false
   std::thread t_rear = std::thread(road_camera_thread, &s->road_cam);
+#endif
   driver_camera_thread(&s->driver_cam);
 
   LOG(" ************** STOPPING **************");
 
+#if false
   t_rear.join();
+#endif
 
   for (auto &t : threads) t.join();
 
