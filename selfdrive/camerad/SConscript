@@ -4,8 +4,7 @@ libs = ['m', 'pthread', common, 'jpeg', 'OpenCL', 'yuv', cereal, messaging, 'zmq
 
 if arch == "aarch64":
   libs += ['gsl', 'CB', 'adreno_utils', 'EGL', 'GLESv3', 'cutils', 'ui', 'android', 'camera2ndk', 'mediandk']
-  cameras = ['cameras/camera_android.cc',
-    env.Object('camera-imagereader', '#/selfdrive/camerad/cameras/android/image_reader.cc')]
+  cameras = ['cameras/camera_android.cc']
   env = env.Clone()
   env['LIBPATH'] = ['/system/lib64'] + env['LIBPATH']
   env['ENV']['LD_LIBRARY_PATH'] = ['/system/lib64'] + env['ENV']['LD_LIBRARY_PATH']

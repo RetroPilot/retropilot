@@ -19,8 +19,6 @@
 #include "selfdrive/common/timing.h"
 #include "selfdrive/common/util.h"
 #include "selfdrive/camerad/cameras/camera_common.h"
-#include "selfdrive/camerad/cameras/android/image_format.h"
-#include "selfdrive/camerad/cameras/android/image_reader.h"
 
 #define FRAME_BUF_COUNT 4
 
