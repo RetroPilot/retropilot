@@ -161,7 +161,7 @@ void CameraState::camera_run(float *ts) {
     // ** copy image data to cl buffer **
     uint8_t *data = NULL;
     int size = 0;
-    media_status_t status = AImage_getPlaneData(image, 0, &data, &size);
+    status = AImage_getPlaneData(image, 0, &data, &size);
     assert(status == AMEDIA_OK);  // failed to get image data
 
     auto &buffer = buf.camera_bufs[buf_idx];
