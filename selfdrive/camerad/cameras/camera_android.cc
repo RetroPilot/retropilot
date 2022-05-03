@@ -76,7 +76,7 @@ void create_image_reader(CameraInfo *ci, AIMAGE_FORMATS format, AImageReader **r
 
   // new image reader
   status = AImageReader_new(ci->frame_width, ci->frame_height, format, 1, reader);
-  assert(*reader && status == ACAMERA_OK);
+  assert(*reader && status == AMEDIA_OK);
 
   // get native window
   status = AImageReader_getWindow(*reader, window);
