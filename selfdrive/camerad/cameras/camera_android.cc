@@ -145,14 +145,14 @@ void CameraState::camera_open() {
 void CameraState::camera_run(float *ts) {
   LOGD("camera_run %d", camera_num);
 
-  start_preview(true);
-
   // TODO: implement transform
   // cv::Size size(ci.frame_width, ci.frame_height);
   // const cv::Mat transform = cv::Mat(3, 3, CV_32F, ts);
 
   uint32_t frame_id = 0;
   size_t buf_idx = 0;
+
+  start_preview(true);
 
   while (!do_exit) {
     // ** get image **
