@@ -138,9 +138,9 @@ void CameraState::camera_run(float *ts) {
     AImage *image = NULL;
     media_status_t status = AImageReader_acquireLatestImage(yuv_reader, &image);
     if (status != AMEDIA_OK) {
-      if (status != AMEDIA_IMGREADER_NO_BUFFER_AVAILABLE) {
-        LOGW("camera_run: AImageReader_acquireLatestImage status %d", status);
-      }
+      // if (status != AMEDIA_IMGREADER_NO_BUFFER_AVAILABLE) {
+      LOGW("camera_run: AImageReader_acquireLatestImage status %d", status);
+      // }
       continue;
     }
     LOGD("camera_run: image=%p", image);
