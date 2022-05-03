@@ -67,51 +67,60 @@ void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServe
 
   // TODO: after we figure out how to copy the camera_id
   // ACameraManager_deleteCameraIdList(camera_id_list);
-
-  // ** create image reader **
-  image_format = new ImageFormat();
-  image_format->width = ci.frame_width;
-  image_format->height = ci.frame_height;
-  image_format->format = AIMAGE_FORMAT_YUV_420_888;
-  image_reader = new ImageReader(image_format, AIMAGE_FORMAT_YUV_420_888);
 }
 
 void CameraState::camera_open() {
   LOGD("camera_open camera_num=%d camera_id=\"%s\"", camera_num, camera_id);
 
+  // ** create image reader **
+  media_status_t media_status = AImageReader_new(ci.frame_width, ci.frame_height,
+                                                 AIMAGE_FORMAT_YUV_420_888,
+                                                 1, &yuv_reader);
+  if (media_status) LOGD("camera_init: AImageReader_new status %d", media_status);
+  assert(yuv_reader && media_status == AMEDIA_OK); // failed to create AImageReader
+
+  // ** open camera **
+
   ACameraManager *camera_manager = multi_cam_state->camera_manager;
 
-  camera_status_t status = ACameraManager_openCamera(camera_manager, camera_id,
-                                                     get_device_listener(), &camera_device);
-  LOGD("camera_open: open camera_id=\"%s\" status=%d", camera_id, status);
-  assert(status == ACAMERA_OK);
+  camera_status_t camera_status = ACameraManager_openCamera(camera_manager, camera_id,
+                                                            get_device_listener(), &camera_device);
+  LOGD("camera_open: open camera_id=\"%s\" status=%d", camera_id, camera_status);
+  assert(camera_status == ACAMERA_OK);
 
-  ANativeWindow *window = image_reader->GetNativeWindow();
+  // ** create capture session container **
+  camera_status = ACaptureSessionOutputContainer_create(&capture_session_output_container);
+  assert(camera_status == ACAMERA_OK);
 
-  status = ACaptureSessionOutputContainer_create(&capture_session_output_container);
-  assert(status == ACAMERA_OK);
+  // yuv window
+  ANativeWindow *window = NULL;
+  media_status_t media_status = AImageReader_getWindow(yuv_reader, &window);
+  assert(media_status == AMEDIA_OK);  // could not get ANativeWindow
   ANativeWindow_acquire(window);
-  status = ACaptureSessionOutput_create(window, &capture_session_output);
-  assert(status == ACAMERA_OK);
-  status = ACaptureSessionOutputContainer_add(capture_session_output_container,
-                                              capture_session_output);
-  assert(status == ACAMERA_OK);
-  status = ACameraOutputTarget_create(window, &camera_output_target);
-  assert(status == ACAMERA_OK);
+
+  camera_status = ACaptureSessionOutput_create(window, &capture_session_output);
+  assert(camera_status == ACAMERA_OK);
+  camera_status = ACaptureSessionOutputContainer_add(capture_session_output_container,
+                                                     capture_session_output);
+  assert(camera_status == ACAMERA_OK);
+  camera_status = ACameraOutputTarget_create(window, &camera_output_target);
+  assert(camera_status == ACAMERA_OK);
 
   // use TEMPLATE_RECORD for good quality and OK frame rate
-  status = ACameraDevice_createCaptureRequest(camera_device, TEMPLATE_RECORD, &capture_request);
-  assert(status == ACAMERA_OK); // failed to create preview capture request
+  camera_status = ACameraDevice_createCaptureRequest(camera_device, TEMPLATE_RECORD, &capture_request);
+  assert(camera_status == ACAMERA_OK); // failed to create preview capture request
 
-  status = ACaptureRequest_addTarget(capture_request, camera_output_target);
-  assert(status == ACAMERA_OK);
+  camera_status = ACaptureRequest_addTarget(capture_request, camera_output_target);
+  assert(camera_status == ACAMERA_OK);
 
-  status = ACameraDevice_createCaptureSession(camera_device, capture_session_output_container,
-                                              get_capture_session_listener(), &capture_session);
-  assert(status == ACAMERA_OK);
+  // create capture session
+  camera_status = ACameraDevice_createCaptureSession(camera_device, capture_session_output_container,
+                                                     get_session_listener(), &capture_session);
+  assert(camera_status == ACAMERA_OK);
 
-  status = ACameraCaptureSession_setRepeatingRequest(capture_session, NULL, 1, &capture_request, NULL);
-  assert(status == ACAMERA_OK);
+  // set repeating request
+  camera_status = ACameraCaptureSession_setRepeatingRequest(capture_session, NULL, 1, &capture_request, NULL);
+  assert(camera_status == ACAMERA_OK);
 }
 
 void CameraState::camera_run(float *ts) {
@@ -126,8 +135,14 @@ void CameraState::camera_run(float *ts) {
 
   while (!do_exit) {
     // ** get image **
-    AImage *image = image_reader->GetLatestImage();
-    if (image == NULL) continue;
+    AImage *image = NULL;
+    media_status_t status = AImageReader_acquireLatestImage(yuv_reader, &image);
+    if (status != AMEDIA_OK) {
+      if (status != AMEDIA_IMGREADER_NO_BUFFER_AVAILABLE) {
+        LOGW("camera_run: AImageReader_acquireLatestImage status %d", status);
+      }
+      continue;
+    }
     LOGD("camera_run: image=%p", image);
 
     // ** debug **
@@ -248,7 +263,7 @@ void OnSessionActive(void *context, ACameraCaptureSession *session) {
   LOGD("session %p active", session);
 }
 
-ACameraCaptureSession_stateCallbacks *CameraState::get_capture_session_listener() {
+ACameraCaptureSession_stateCallbacks *CameraState::get_session_listener() {
   static ACameraCaptureSession_stateCallbacks session_listener = {
     .context = this,
     .onActive = ::OnSessionActive,

@@ -24,6 +24,11 @@
 
 #define FRAME_BUF_COUNT 4
 
+struct ImageFormat {
+  int32_t width;
+  int32_t height;
+};
+
 class CameraState {
 public:
   CameraInfo ci;
@@ -45,8 +50,7 @@ private:
   int32_t camera_orientation;
   const char *camera_id;
 
-  ImageFormat *image_format;
-  ImageReader *image_reader;
+  AImageReader *yuv_reader;
 
 public:
   void camera_init(MultiCameraState *multi_cam_state_, VisionIpcServer *v, int camera_index, int camera_id_, unsigned int fps, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type);
@@ -55,7 +59,7 @@ public:
   void camera_close();
 
   ACameraDevice_StateCallbacks *get_device_listener();
-  ACameraCaptureSession_stateCallbacks *get_capture_session_listener();
+  ACameraCaptureSession_stateCallbacks *get_session_listener();
 };
 
 
