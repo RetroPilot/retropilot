@@ -71,8 +71,28 @@ void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServe
   // ACameraManager_deleteCameraIdList(camera_id_list);
 }
 
-void match_capture_size_request(ImageFormat *view, int32_t width, int32_t height, enum AIMAGE_FORMATS desired_format) {
-  LOGD("match_capture_size_request: w=%d, h=%d, format=0x%X", width, height, format);
+void create_image_reader(CameraInfo *ci, AIMAGE_FORMATS format, AImageReader **reader, ANativeWindow **window) {
+  media_status_t status;
+
+  // new image reader
+  status = AImageReader_new(ci->frame_width, ci->frame_height, format, 2, reader);
+  assert(*reader && status == AMEDIA_OK);
+
+  // get native window
+  status = AImageReader_getWindow(*reader, window);
+  assert(*window && status == AMEDIA_OK);
+}
+
+void open_camera(ACameraManager *manager, const char *camera_id, ACameraDevice_StateCallbacks *listener, ACameraDevice **device) {
+  camera_status_t status;
+
+  // open camera device
+  status = ACameraManager_openCamera(manager, camera_id, listener, device);
+  assert(*device && status == ACAMERA_OK);
+}
+
+void CameraState::match_camera_size(ImageFormat *view, int32_t width, int32_t height, enum AIMAGE_FORMATS desired_format) {
+  LOGD("match_camera_size: w=%d, h=%d, format=0x%X", width, height, desired_format);
 
   DisplayDimension disp(width, height);
 
@@ -98,28 +118,20 @@ void match_capture_size_request(ImageFormat *view, int32_t width, int32_t height
       LOGD("found format 0x%X, w: %d, h: %d", format, res.width(), res.height());
     }
 
-    if (format == )
+    if (format == desired_format && width == res.width() && height == res.height()) {
+      foundIt = true;
+      foundRes = res;
+      break;
+    }
   }
-}
 
-void create_image_reader(CameraInfo *ci, AIMAGE_FORMATS format, AImageReader **reader, ANativeWindow **window) {
-  media_status_t status;
-
-  // new image reader
-  status = AImageReader_new(ci->frame_width, ci->frame_height, format, 2, reader);
-  assert(*reader && status == AMEDIA_OK);
-
-  // get native window
-  status = AImageReader_getWindow(*reader, window);
-  assert(*window && status == AMEDIA_OK);
-}
-
-void open_camera(ACameraManager *manager, const char *camera_id, ACameraDevice_StateCallbacks *listener, ACameraDevice **device) {
-  camera_status_t status;
-
-  // open camera device
-  status = ACameraManager_openCamera(manager, camera_id, listener, device);
-  assert(*device && status == ACAMERA_OK);
+  if (foundIt) {
+    view->width = foundRes.org_width();
+    view->height = foundRes.org_height();
+    LOGD("found width=%d, height=%d", view->width, view->height);
+  } else {
+    LOGW("could not find a matching resolution");
+  }
 }
 
 void CameraState::create_session(ANativeWindow *window, ACameraDevice *device) {
@@ -168,9 +180,17 @@ void CameraState::camera_open() {
 
   ACameraManager *manager = multi_cam_state->camera_manager;
 
+  match_camera_size(&view, ci.frame_width, ci.frame_height, AIMAGE_FORMAT_YUV_420_888);
+  LOGD("camera_open: view w=%d, h=%d", view.width, view.height);
+
   create_image_reader(&ci, AIMAGE_FORMAT_YUV_420_888, &yuv_reader, &yuv_window);
+  LOGD("camera_open: yuv_reader=%p, yuv_window=%p", yuv_reader, yuv_window);
+
   open_camera(manager, camera_id, get_device_listener(), &camera_device);
+  LOGD("camera_open: camera_device=%p", camera_device);
+
   create_session(yuv_window, camera_device);
+  LOGD("camera_open: capture_session=%p", capture_session);
 }
 
 void CameraState::camera_run(float *ts) {
@@ -193,9 +213,10 @@ void CameraState::camera_run(float *ts) {
       if (status != AMEDIA_IMGREADER_NO_BUFFER_AVAILABLE) {
         LOGW("camera_run: AImageReader_acquireLatestImage status %d", status);
       }
-      sleep(1);
+      util::sleep_for(1);
       continue;
     }
+
     LOGD("camera_run: image=%p", image);
 
     // ** debug **
