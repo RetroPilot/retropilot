@@ -71,11 +71,42 @@ void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServe
   // ACameraManager_deleteCameraIdList(camera_id_list);
 }
 
+void match_capture_size_request(ImageFormat *view, int32_t width, int32_t height, enum AIMAGE_FORMATS desired_format) {
+  LOGD("match_capture_size_request: w=%d, h=%d, format=0x%X", width, height, format);
+
+  DisplayDimension disp(width, height);
+
+  ACameraMetadata *metadata = nullptr;
+  ACameraManager_getCameraCharacteristics(multi_cam_state->camera_manager, camera_id, &metadata);
+  ACameraMetadata_const_entry entry;
+  ACameraMetadata_getConstEntry(metadata, ACAMERA_SCALER_AVAILABLE_STREAM_CONFIGURATIONS, &entry);
+  // format of the data: format, width, height, input?, type int32
+
+  bool foundIt = false;
+  DisplayDimension foundRes(1920, 1080);
+
+  for (int i = 0; i < entry.count; i++) {
+    int32_t input = entry.data.i32[i * 4 + 3];
+    int32_t format = entry.data.i32[i * 4 + 0];
+
+    if (input) continue;
+
+    DisplayDimension res(entry.data.i32[i * 4 + 1],
+                         entry.data.i32[i * 4 + 2]);
+
+    if (format) {
+      LOGD("found format 0x%X, w: %d, h: %d", format, res.width(), res.height());
+    }
+
+    if (format == )
+  }
+}
+
 void create_image_reader(CameraInfo *ci, AIMAGE_FORMATS format, AImageReader **reader, ANativeWindow **window) {
   media_status_t status;
 
   // new image reader
-  status = AImageReader_new(ci->frame_width, ci->frame_height, format, 1, reader);
+  status = AImageReader_new(ci->frame_width, ci->frame_height, format, 2, reader);
   assert(*reader && status == AMEDIA_OK);
 
   // get native window
