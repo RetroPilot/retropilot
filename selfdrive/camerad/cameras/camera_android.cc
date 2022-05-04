@@ -158,6 +158,7 @@ void CameraState::create_session(ANativeWindow *window, ACameraDevice *device) {
   status = ACameraDevice_createCaptureSession(device, capture_session_output_container,
                                               get_session_listener(), &capture_session);
   assert(capture_session && status == ACAMERA_OK);
+  LOGD("create_session: created capture session");
 
   // TODO: manual mode
 }
