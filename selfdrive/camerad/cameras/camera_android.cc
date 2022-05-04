@@ -442,23 +442,6 @@ void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_i
                                                      &metadata);
     assert(status == ACAMERA_OK);  // failed to get camera characteristics
 
-    ACameraMetadata_const_entry entry;
-    status = ACameraMetadata_getConstEntry(metadata,
-                                           ACAMERA_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
-                                           &entry);
-
-    // format of the data: format, width, height, input?, type int 32
-    for (int j = 0; j < entry.count; j += 4) {
-      int32_t input = entry.data.i32[j + 3];
-      int32_t format = entry.data.i32[j + 0];
-      if (input) continue;
-
-      const char *format_name = ParseFormat(static_cast<AIMAGE_FORMATS>(format));
-      int32_t width = entry.data.i32[j + 1];
-      int32_t height = entry.data.i32[j + 2];
-      LOG("Camera %s supports format %s (%d): %dx%d", id, format_name, format, width, height);
-    }
-
     int32_t count = 0;
     const uint32_t* tags = nullptr;
     status = ACameraMetadata_getAllTags(metadata, &count, &tags);
