@@ -91,7 +91,7 @@ void open_camera(ACameraManager *manager, const char *camera_id, ACameraDevice_S
   assert(*device && status == ACAMERA_OK);
 }
 
-void CameraState::match_camera_size(ImageFormat *view, int32_t width, int32_t height, enum AIMAGE_FORMATS desired_format) {
+void CameraState::match_camera_size(int32_t width, int32_t height, enum AIMAGE_FORMATS desired_format) {
   LOGD("match_camera_size: w=%d, h=%d, format=0x%X", width, height, desired_format);
 
   DisplayDimension disp(width, height);
@@ -126,9 +126,9 @@ void CameraState::match_camera_size(ImageFormat *view, int32_t width, int32_t he
   }
 
   if (foundIt) {
-    view->width = foundRes.org_width();
-    view->height = foundRes.org_height();
-    LOGD("found width=%d, height=%d", view->width, view->height);
+    view.width = foundRes.org_width();
+    view.height = foundRes.org_height();
+    LOGD("found width=%d, height=%d", view.width, view.height);
   } else {
     LOGW("could not find a matching resolution");
   }
@@ -180,7 +180,7 @@ void CameraState::camera_open() {
 
   ACameraManager *manager = multi_cam_state->camera_manager;
 
-  match_camera_size(&view, ci.frame_width, ci.frame_height, AIMAGE_FORMAT_YUV_420_888);
+  match_camera_size(ci.frame_width, ci.frame_height, AIMAGE_FORMAT_YUV_420_888);
   LOGD("camera_open: view w=%d, h=%d", view.width, view.height);
 
   create_image_reader(&ci, AIMAGE_FORMAT_YUV_420_888, &yuv_reader, &yuv_window);

@@ -119,7 +119,7 @@ public:
   void camera_run(float *ts);
   void camera_close();
 
-  void match_camera_size(ImageFormat *view, int32_t width, int32_t height, enum AIMAGE_FORMATS desired_format);
+  void match_camera_size(int32_t width, int32_t height, enum AIMAGE_FORMATS desired_format);
   void create_session(ANativeWindow *window, ACameraDevice *device);
   void start_preview(bool start);
 
