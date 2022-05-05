@@ -34,9 +34,28 @@ CameraInfo cameras_supported[CAMERA_ID_MAX] = {
   },
 };
 
+void CameraState::camera_open() {
+  LOGD("camera_open %d", camera_num);
+}
+
+void CameraState::camera_close() {
+  LOGD("camera_close %d", camera_num);
+
+  // if (image_reader) {
+  //   delete image_reader;
+  //   image_reader = nullptr;
+  // }
+  // if (native_camera) {
+  //   delete native_camera;
+  //   native_camera = nullptr;
+  // }
+}
+
 void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServer *v, int camera_index, int camera_id_, unsigned int fps_, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type) {
   LOGD("camera_init: camera_index %d, camera_id_ %d", camera_index, camera_id_);
+
   multi_cam_state = multi_cam_state_;
+
   assert(camera_id_ < std::size(cameras_supported));
   ci = cameras_supported[camera_id_];
   assert(ci.frame_width != 0);
@@ -54,15 +73,10 @@ void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServe
   // }
 }
 
-void CameraState::camera_open() {
-  LOGD("camera_open %d", camera_num);
-}
-
 void CameraState::camera_run(float *ts) {
   LOGD("camera_run %d", camera_num);
 
   uint32_t frame_id = 0;
-  size_t buf_idx = 0;
 
   enum AIMAGE_FORMATS fmt = AIMAGE_FORMAT_YUV_420_888;
 
@@ -88,13 +102,14 @@ void CameraState::camera_run(float *ts) {
 
     LOGD("camera_run: image=%p", image);
 
-    int32_t format = -1;
-    media_status_t status = AImage_getFormat(image, &format);
-    assert(status == AMEDIA_OK && format == AIMAGE_FORMAT_YUV_420_888);
+    media_status_t status;
 
-    int32_t planeCount = 0;
+    int32_t planeCount;
+    int32_t format;
     status = AImage_getNumberOfPlanes(image, &planeCount);
     assert(status == AMEDIA_OK && planeCount == 3);
+    status = AImage_getFormat(image, &format);
+    assert(status == AMEDIA_OK && format == AIMAGE_FORMAT_YUV_420_888);
 
     uint8_t *y_data, *u_data, *v_data;
     int y_len, u_len, v_len;
@@ -122,19 +137,6 @@ void CameraState::camera_run(float *ts) {
 #endif
 }
 
-void CameraState::camera_close() {
-  LOGD("camera_close %d", camera_num);
-
-  // if (image_reader) {
-  //   delete image_reader;
-  //   image_reader = nullptr;
-  // }
-  // if (native_camera) {
-  //   delete native_camera;
-  //   native_camera = nullptr;
-  // }
-}
-
 #if ROAD
 static void road_camera_thread(CameraState *s) {
   util::set_thread_name("android_road_camera_thread");
@@ -151,7 +153,7 @@ static void road_camera_thread(CameraState *s) {
 }
 #endif
 
-void driver_camera_thread(CameraState *s) {
+static void driver_camera_thread(CameraState *s) {
   util::set_thread_name("android_driver_camera_thread");
 
   // transforms calculation see tools/webcam/warp_vis.py
@@ -206,7 +208,7 @@ void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_i
   // free camera id list
   ACameraManager_deleteCameraIdList(camera_id_list);
 
-#if false
+#if ROAD
   LOG("*** init road camera ***");
   s->road_cam.camera_init(s, v, ROAD_CAMERA_INDEX, CAMERA_ID_IMX363, 20, device_id, ctx,
                           VISION_STREAM_RGB_ROAD, VISION_STREAM_ROAD);
@@ -221,7 +223,7 @@ void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_i
 void camera_autoexposure(CameraState *s, float grey_frac) {}
 
 void cameras_open(MultiCameraState *s) {
-#if false
+#if ROAD
   LOG("*** open road camera ***");
   s->road_cam.camera_open();
 #endif
@@ -230,7 +232,7 @@ void cameras_open(MultiCameraState *s) {
 }
 
 void cameras_close(MultiCameraState *s) {
-#if false
+#if ROAD
   LOG("*** close road camera ***");
   s->road_cam.camera_close();
 #endif
@@ -247,7 +249,7 @@ void process_driver_camera(MultiCameraState *s, CameraState *c, int cnt) {
   s->pm->send("driverCameraState", msg);
 }
 
-#if false
+#if ROAD
 void process_road_camera(MultiCameraState *s, CameraState *c, int cnt) {
   const CameraBuf *b = &c->buf;
   MessageBuilder msg;
@@ -268,15 +270,11 @@ void cameras_run(MultiCameraState *s) {
   threads.push_back(start_process_thread(s, &s->driver_cam, process_driver_camera));
 
 #if false
-  std::thread t_rear = std::thread(road_camera_thread, &s->road_cam);
+  threads.push_back(std::thread(road_camera_thread, &s->road_cam));
 #endif
-  driver_camera_thread(&s->driver_cam);
+  threads.push_back(std::thread(driver_camera_thread, &s->driver_cam));
 
   LOG(" ************** STOPPING **************");
-
-#if false
-  t_rear.join();
-#endif
 
   for (auto &t : threads) t.join();
 

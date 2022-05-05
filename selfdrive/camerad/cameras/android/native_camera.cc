@@ -14,10 +14,10 @@ NativeCamera::NativeCamera(int camera_index) {
 
   camera_id = camera_id_list->cameraIds[camera_index];
 
-  // ACameraMetadata *metadata;
-  // status = ACameraManager_getCameraCharacteristics(camera_manager, camera_id, &metadata);
-  // assert(status == ACAMERA_OK && metadata);
-  // ACameraMetadata_free(metadata);
+  ACameraMetadata *metadata;
+  status = ACameraManager_getCameraCharacteristics(camera_manager, camera_id, &metadata);
+  assert(status == ACAMERA_OK && metadata);
+  ACameraMetadata_free(metadata);
 
   status = ACameraManager_openCamera(camera_manager, camera_id,
                                      get_device_listener(), &camera_device);

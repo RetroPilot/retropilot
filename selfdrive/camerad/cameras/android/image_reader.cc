@@ -52,7 +52,9 @@ AImage *ImageReader::GetLatestImage() {
 }
 
 void ImageReader::DeleteImage(AImage *image) {
-  if (image) AImage_delete(image);
+  if (image) {
+    AImage_delete(image);
+  }
 }
 
 void ImageReader::ImageCallback(AImageReader *r) {
@@ -77,7 +79,7 @@ void ImageReader::ImageCallback(AImageReader *r) {
     AImage_getPlaneData(image, 0, &data, &len);
     LOGD("data: %p, len: %d", data, len);
 
-    // FIXME: do we need to delete the image? we might use it somewhere else
-    // AImage_delete(image);
+    // TODO: do we need to delete the image? we might use it somewhere else
+    AImage_delete(image);
   }
 }

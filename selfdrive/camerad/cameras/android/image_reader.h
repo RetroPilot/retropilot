@@ -13,8 +13,21 @@ public:
 
   ~ImageReader();
 
+  /**
+   * Get the Native Window object
+   */
   ANativeWindow *GetNativeWindow();
 
+  /**
+   * Get the image on the top of the queue.
+   */
+  AImage *GetNextImage();
+
+  /**
+   * @brief Retrieve image on the bottom of the queue.
+   *
+   * @return AImage*
+   */
   AImage *GetLatestImage();
 
   void DeleteImage(AImage *image);
