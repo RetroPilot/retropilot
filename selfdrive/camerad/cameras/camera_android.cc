@@ -166,46 +166,6 @@ static void driver_camera_thread(CameraState *s) {
 }
 
 void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_id, cl_context ctx) {
-  s->camera_manager = ACameraManager_create();
-
-  ACameraIdList *camera_id_list = NULL;
-  camera_status_t status = ACameraManager_getCameraIdList(s->camera_manager, &camera_id_list);
-  assert(status == ACAMERA_OK);  // failed to get camera id list
-  LOG("Found %d cameras", camera_id_list->numCameras);
-
-  // loop over cameras and print info
-  for (int i = 0; i < camera_id_list->numCameras; i++) {
-    const char* id = camera_id_list->cameraIds[i];
-    LOG("Camera index %d: id=\"%s\"", i, id);
-
-    ACameraMetadata *metadata = NULL;
-    status = ACameraManager_getCameraCharacteristics(s->camera_manager,
-                                                     id,
-                                                     &metadata);
-    assert(status == ACAMERA_OK);  // failed to get camera characteristics
-
-    int32_t count = 0;
-    const uint32_t* tags = nullptr;
-    status = ACameraMetadata_getAllTags(metadata, &count, &tags);
-    assert(status == ACAMERA_OK);  // failed to get camera metadata
-
-    for (int idx = 0; idx < count; idx++) {
-      if (ACAMERA_LENS_FACING == tags[idx]) {
-        ACameraMetadata_const_entry lensInfo = { 0 };
-
-        status = ACameraMetadata_getConstEntry(metadata, tags[idx], &lensInfo);
-        assert(status == ACAMERA_OK);  // failed to get camera metadata
-        LOG("Camera id=\"%s\": lens facing=%d", id, lensInfo.data.i32[0]);
-      }
-    }
-
-    // free metadata
-    ACameraMetadata_free(metadata);
-  }
-
-  // free camera id list
-  ACameraManager_deleteCameraIdList(camera_id_list);
-
 #if ROAD
   LOG("*** init road camera ***");
   s->road_cam.camera_init(s, v, ROAD_CAMERA_INDEX, CAMERA_ID_IMX363, 20, device_id, ctx,

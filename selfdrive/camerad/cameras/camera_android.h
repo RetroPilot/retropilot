@@ -44,8 +44,6 @@ public:
 
 
 typedef struct MultiCameraState {
-  ACameraManager *camera_manager;
-
   CameraState road_cam;
   CameraState driver_cam;
 
