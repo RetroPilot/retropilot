@@ -5,8 +5,8 @@
 #include "selfdrive/common/swaglog.h"
 
 // id of the video capturing device
-const int ROAD_CAMERA_INDEX = util::getenv("ROADCAM_ID", 0);
-const int DRIVER_CAMERA_INDEX = util::getenv("DRIVERCAM_ID", 1);
+const int ROAD_CAMERA_INDEX = util::getenv("ROADCAM_ID", 1);
+const int DRIVER_CAMERA_INDEX = util::getenv("DRIVERCAM_ID", 2);
 
 #define FRAME_WIDTH  1280
 #define FRAME_HEIGHT 720
