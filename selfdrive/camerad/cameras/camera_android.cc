@@ -60,6 +60,9 @@ void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServe
   assert(view.width && view.height);
 
   image_reader = new ImageReader(&view, format);
+
+  ANativeWindow *window = image_reader->GetNativeWindow();
+  native_camera->create_capture_session(window);
 }
 
 void CameraState::camera_open() {
