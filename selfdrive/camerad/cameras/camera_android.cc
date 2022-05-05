@@ -230,7 +230,7 @@ void cameras_run(MultiCameraState *s) {
 #if false
   threads.push_back(std::thread(road_camera_thread, &s->road_cam));
 #endif
-  threads.push_back(std::thread(driver_camera_thread, &s->driver_cam));
+  driver_camera_thread(&s->driver_cam);
 
   LOG(" ************** STOPPING **************");
 
