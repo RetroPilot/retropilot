@@ -21,11 +21,13 @@ ImageReader::ImageReader(ImageFormat *res, enum AIMAGE_FORMATS format) {
                                            2, &reader);
   assert(reader && status == AMEDIA_OK);
 
+#if false
   AImageReader_ImageListener listener {
       .context = this,
       .onImageAvailable = OnImageCallback,
   };
   AImageReader_setImageListener(reader, &listener);
+#endif
 }
 
 ImageReader::~ImageReader() {
