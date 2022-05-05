@@ -19,7 +19,7 @@ void OnImageCallback(void *ctx, AImageReader *reader) {
 ImageReader::ImageReader(ImageFormat *res, enum AIMAGE_FORMATS format) {
   media_status_t status = AImageReader_new(res->width, res->height, format,
                                            2, &reader);
-  assert(reader && status == AMEDIA_OK);
+  assert(status == AMEDIA_OK);
 
 #if false
   AImageReader_ImageListener listener {
@@ -37,7 +37,7 @@ ImageReader::~ImageReader() {
 ANativeWindow *ImageReader::GetNativeWindow() {
   ANativeWindow *window;
   media_status_t status = AImageReader_getWindow(reader, &window);
-  assert(status == AMEDIA_OK && window);
+  assert(status == AMEDIA_OK);
   return window;
 }
 

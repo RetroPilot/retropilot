@@ -104,27 +104,27 @@ void NativeCamera::create_capture_session(ANativeWindow *window) {
 
   // create output container
   status = ACaptureSessionOutputContainer_create(&capture_session_output_container);
-  assert(capture_session_output_container && status == ACAMERA_OK);
+  assert(status == ACAMERA_OK);
 
   // create output to native window
   ANativeWindow_acquire(window);
   status = ACaptureSessionOutput_create(window, &capture_session_output);
-  assert(capture_session_output && status == ACAMERA_OK);
+  assert(status == ACAMERA_OK);
   status = ACaptureSessionOutputContainer_add(capture_session_output_container, capture_session_output);
   assert(status == ACAMERA_OK);
   status = ACameraOutputTarget_create(window, &camera_output_target);
-  assert(camera_output_target && status == ACAMERA_OK);
+  assert(status == ACAMERA_OK);
 
   // create capture request and add output target to it
   status = ACameraDevice_createCaptureRequest(camera_device, TEMPLATE_RECORD, &capture_request);
-  assert(capture_request && status == ACAMERA_OK);
+  assert(status == ACAMERA_OK);
   status = ACaptureRequest_addTarget(capture_request, camera_output_target);
   assert(status == ACAMERA_OK);
 
   // create capture session
   status = ACameraDevice_createCaptureSession(camera_device, capture_session_output_container,
                                               get_session_listener(), &capture_session);
-  assert(capture_session && status == ACAMERA_OK);
+  assert(status == ACAMERA_OK);
   LOGD("create_capture_session: created capture session");
 
   // TODO: manual mode
