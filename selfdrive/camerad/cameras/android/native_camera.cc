@@ -72,9 +72,8 @@ void NativeCamera::match_capture_size_request(ImageFormat *view, int32_t width, 
 
     if (input) continue;
 
-    int32_t width = entry.data.i32[i * 4 + 1];
-    int32_t height = entry.data.i32[i * 4 + 2];
-    DisplayDimension res(width, height);
+    DisplayDimension res(entry.data.i32[i * 4 + 1],
+                         entry.data.i32[i * 4 + 2]);
 
     if (format) {
       LOGD("found format 0x%X, w: %d, h: %d", format, res.width(), res.height());
