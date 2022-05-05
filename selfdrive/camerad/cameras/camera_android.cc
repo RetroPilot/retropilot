@@ -62,6 +62,10 @@ void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServe
   image_reader = new ImageReader(&view, format);
 }
 
+void CameraState::camera_open() {
+  LOGD("camera_open %d", camera_num);
+}
+
 void CameraState::camera_run(float *ts) {
   LOGD("camera_run %d", camera_num);
 
