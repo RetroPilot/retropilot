@@ -34,7 +34,9 @@ public:
 
   void create_capture_session(ANativeWindow *window);
 
+#if false
   void start_preview(bool start);
+#endif
 
   int32_t get_camera_count() { return camera_id_list->numCameras; }
   uint32_t get_orientation() { return camera_orientation; }

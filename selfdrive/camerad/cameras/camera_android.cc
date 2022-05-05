@@ -52,17 +52,6 @@ void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServe
   // } else if (camera_id_ == CAMERA_ID_IMX355) {
   //   camera_orientation = 270;
   // }
-
-  enum AIMAGE_FORMATS format = AIMAGE_FORMAT_YUV_420_888;
-
-  native_camera = new NativeCamera(camera_index);
-  native_camera->match_capture_size_request(&view, ci.frame_width, ci.frame_height, format);
-  assert(view.width && view.height);
-
-  image_reader = new ImageReader(&view, format);
-
-  ANativeWindow *window = image_reader->GetNativeWindow();
-  native_camera->create_capture_session(window);
 }
 
 void CameraState::camera_open() {
@@ -75,7 +64,20 @@ void CameraState::camera_run(float *ts) {
   uint32_t frame_id = 0;
   size_t buf_idx = 0;
 
+  enum AIMAGE_FORMATS fmt = AIMAGE_FORMAT_YUV_420_888;
+
+  native_camera = new NativeCamera(camera_num);
+  native_camera->match_capture_size_request(&view, ci.frame_width, ci.frame_height, fmt);
+  assert(view.width && view.height);
+
+  image_reader = new ImageReader(&view, fmt);
+
+  ANativeWindow *window = image_reader->GetNativeWindow();
+  native_camera->create_capture_session(window);
+
+#if false
   native_camera->start_preview(true);
+#endif
 
   while (!do_exit) {
     AImage *image = image_reader->GetLatestImage();
@@ -115,7 +117,9 @@ void CameraState::camera_run(float *ts) {
     ++frame_id;
   }
 
+#if false
   native_camera->start_preview(false);
+#endif
 }
 
 void CameraState::camera_close() {
