@@ -127,8 +127,6 @@ void CameraState::camera_run(float *ts) {
     // ** release image **
     AImage_delete(image);
 
-    buf.queue(buf_idx);
-
     ++frame_id;
   }
 
