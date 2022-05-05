@@ -53,17 +53,17 @@ void ImageReader::DeleteImage(AImage *image) {
   if (image) AImage_delete(image);
 }
 
-void ImageReader::ImageCallback(AImageReader *reader) {
+void ImageReader::ImageCallback(AImageReader *r) {
   LOGD("ImageReader::ImageCallback");
 
   int32_t format;
-  media_status_t status = AImageReader_getFormat(reader, &format);
+  media_status_t status = AImageReader_getFormat(r, &format);
   assert(status == AMEDIA_OK);
   LOGD("format: 0x%X", format);
 
   if (format == AIMAGE_FORMAT_JPEG) {
     AImage *image;
-    status = AImageReader_acquireNextImage(reader, &image);
+    status = AImageReader_acquireNextImage(r, &image);
     assert(status == AMEDIA_OK && image);
 
     int planeCount;
