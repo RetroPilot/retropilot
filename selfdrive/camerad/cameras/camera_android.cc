@@ -92,9 +92,7 @@ void CameraState::camera_run(float *ts) {
   ANativeWindow *window = image_reader->GetNativeWindow();
   native_camera->create_capture_session(window);
 
-#if false
   native_camera->start_preview(true);
-#endif
 
   while (!do_exit) {
     AImage *image = image_reader->GetLatestImage();
@@ -133,9 +131,7 @@ void CameraState::camera_run(float *ts) {
     ++frame_id;
   }
 
-#if false
   native_camera->start_preview(false);
-#endif
 }
 
 static void road_camera_thread(CameraState *s) {

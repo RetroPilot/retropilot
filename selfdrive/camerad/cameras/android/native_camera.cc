@@ -128,21 +128,18 @@ void NativeCamera::create_capture_session(ANativeWindow *window) {
   LOGD("create_capture_session: created capture session");
 
   // TODO: manual mode
-
-  status = ACameraCaptureSession_setRepeatingRequest(capture_session, nullptr, 1,
-                                                     &capture_request, nullptr);
-  assert(status == ACAMERA_OK);
 }
 
-#if false
 void NativeCamera::start_preview(bool start) {
   if (start) {
+    camera_status_t status = ACameraCaptureSession_setRepeatingRequest(capture_session, nullptr, 1,
+                                                                       &capture_request, nullptr);
+    assert(status == ACAMERA_OK);
   } else {
     camera_status_t status = ACameraCaptureSession_stopRepeating(capture_session);
     assert(status == ACAMERA_OK);
   }
 }
-#endif
 
 // ** CameraDevice callbacks **
 
