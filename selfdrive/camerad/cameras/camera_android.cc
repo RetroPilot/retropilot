@@ -168,12 +168,12 @@ void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_i
 void camera_autoexposure(CameraState *s, float grey_frac) {}
 
 void cameras_open(MultiCameraState *s) {
+#if false
   LOG("*** open road camera ***");
   s->road_cam.camera_open();
-#if false
+#endif
   LOG("*** open driver camera ***");
   s->driver_cam.camera_open();
-#endif
 }
 
 void cameras_close(MultiCameraState *s) {
