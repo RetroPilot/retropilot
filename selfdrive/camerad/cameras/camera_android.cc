@@ -79,7 +79,7 @@ void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServe
   // }
 }
 
-void CameraState::camera_run(float *ts) {
+void CameraState::camera_run() {
   LOGD("camera_run %d", camera_num);
 
   uint32_t frame_id = 0;
@@ -104,8 +104,6 @@ void CameraState::camera_run(float *ts) {
       continue;
     }
 
-    LOGD("camera_run: image=%p", image);
-
     // ** debug **
     media_status_t status;
 
@@ -115,8 +113,6 @@ void CameraState::camera_run(float *ts) {
     assert(status == AMEDIA_OK && planeCount == 3);
     status = AImage_getFormat(image, &format);
     assert(status == AMEDIA_OK && format == AIMAGE_FORMAT_YUV_420_888);
-
-    LOGD("camera_run: planeCount=%d, format=%d", image, planeCount, format);
 
     // ** send frame **
     MessageBuilder msg;
@@ -147,31 +143,13 @@ void CameraState::camera_run(float *ts) {
 #if false
 static void road_camera_thread(CameraState *s) {
   util::set_thread_name("android_road_camera_thread");
-
-  // transforms calculation see tools/webcam/warp_vis.py
-  float ts[9] = {1.50330396, 0.0, -59.40969163,
-                  0.0, 1.50330396, 76.20704846,
-                  0.0, 0.0, 1.0};
-  // if camera upside down:
-  // float ts[9] = {-1.50330396, 0.0, 1223.4,
-  //                 0.0, -1.50330396, 797.8,
-  //                 0.0, 0.0, 1.0};
-  s->camera_run(ts);
+  s->camera_run();
 }
 #endif
 
 static void driver_camera_thread(CameraState *s) {
   util::set_thread_name("android_driver_camera_thread");
-
-  // transforms calculation see tools/webcam/warp_vis.py
-  float ts[9] = {1.42070485, 0.0, -30.16740088,
-                  0.0, 1.42070485, 91.030837,
-                  0.0, 0.0, 1.0};
-  // if camera upside down:
-  // float ts[9] = {-1.42070485, 0.0, 1182.2,
-  //                 0.0, -1.42070485, 773.0,
-  //                 0.0, 0.0, 1.0};
-  s->camera_run(ts);
+  s->camera_run();
 }
 
 void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_id, cl_context ctx) {
