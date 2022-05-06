@@ -114,6 +114,8 @@ void CameraState::camera_run(float *ts) {
     status = AImage_getFormat(image, &format);
     assert(status == AMEDIA_OK && format == AIMAGE_FORMAT_YUV_420_888);
 
+    LOGD("camera_run: planeCount=%d, format=%d", image, planeCount, format);
+
     // ** transform image **
     int32_t y_stride, uv_stride;
     int32_t uv_pixel_stride;
@@ -128,6 +130,9 @@ void CameraState::camera_run(float *ts) {
     AImage_getPlaneData(image, 1, &u_data, &u_len);
     AImage_getPlaneData(image, 2, &v_data, &v_len);
     AImage_getCropRect(image, &src_rect);
+
+    LOGD("camera_run: y_stride=%d, uv_stride=%d, uv_pixel_stride=%d, y_len=%d, u_len=%d, v_len=%d, src_rect=(%d, %d, %d, %d)",
+         y_stride, uv_stride, uv_pixel_stride, y_len, u_len, v_len, src_rect.left, src_rect.top, src_rect.right, src_rect.bottom);
 
     // NV21 U/V interleaved format
     assert(uv_pixel_stride == 2);
@@ -149,11 +154,15 @@ void CameraState::camera_run(float *ts) {
       }
     }
 
+    LOGD("camera_run: dest=%p", dest);
+
     // ** metadata **
     buf.camera_bufs_metadata[buf_idx] = {
       .frame_id = frame_id,
       .timestamp_eof = nanos_since_boot(),
     };
+
+    LOGD("camera_run: frame_id=%d, timestamp_eof=%lld", frame_id, buf.camera_bufs_metadata[buf_idx].timestamp_eof);
 
     // ** release image **
     AImage_delete(image);
