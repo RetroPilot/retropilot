@@ -244,8 +244,10 @@ void cameras_run(MultiCameraState *s) {
 #else
   driver_camera_thread(&s->driver_cam);
 #endif
-#elif ROAD
+#else
+#if ROAD
   road_camera_thread(&s->road_cam);
+#endif
 #endif
 
   LOG(" ************** STOPPING **************");
