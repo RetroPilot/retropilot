@@ -55,7 +55,11 @@ public:
              ci->frame_width, ci->frame_height, ci->frame_stride,
              b->rgb_width, b->rgb_height, b->rgb_stride,
              ci->bayer_flip, ci->hdr, s->camera_num);
+#ifdef ANDROID_9
+    const char *cl_file = "cameras/real_debayer10.cl";
+#else
     const char *cl_file = Hardware::TICI() ? "cameras/real_debayer.cl" : "cameras/debayer.cl";
+#endif
     cl_program prg_debayer = cl_program_from_file(context, device_id, cl_file, args);
     krnl_ = CL_CHECK_ERR(clCreateKernel(prg_debayer, "debayer10", &err));
     CL_CHECK(clReleaseProgram(prg_debayer));
@@ -65,7 +69,11 @@ public:
     CL_CHECK(clSetKernelArg(krnl_, 0, sizeof(cl_mem), &cam_buf_cl));
     CL_CHECK(clSetKernelArg(krnl_, 1, sizeof(cl_mem), &buf_cl));
 
+#ifdef ANDROID_9
+    if (true) {
+#else
     if (Hardware::TICI()) {
+#endif
       const int debayer_local_worksize = 16;
       constexpr int localMemSize = (debayer_local_worksize + 2 * (3 / 2)) * (debayer_local_worksize + 2 * (3 / 2)) * sizeof(short int);
       const size_t globalWorkSize[] = {size_t(width), size_t(height)};
