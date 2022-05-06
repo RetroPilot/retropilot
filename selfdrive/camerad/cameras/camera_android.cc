@@ -211,11 +211,20 @@ void process_driver_camera(MultiCameraState *s, CameraState *c, int cnt) {
 void process_road_camera(MultiCameraState *s, CameraState *c, int cnt) {
   const CameraBuf *b = &c->buf;
   MessageBuilder msg;
+#if DRIVER
   auto framed = msg.initEvent().initRoadCameraState();
+#else
+  auto framed = msg.initEvent().initDriverCameraState();
+  framed.setFrameType(cereal::FrameData::FrameType::FRONT);
+#endif
   fill_frame_data(framed, b->cur_frame_data);
   framed.setImage(kj::arrayPtr((const uint8_t *)b->cur_yuv_buf->addr, b->cur_yuv_buf->len));
   framed.setTransform(b->yuv_transform.v);
+#if DRIVER
   s->pm->send("roadCameraState", msg);
+#else
+  s->pm->send("driverCameraState", msg);
+#endif
 }
 
 void cameras_run(MultiCameraState *s) {
