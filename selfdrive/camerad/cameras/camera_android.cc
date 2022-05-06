@@ -145,40 +145,44 @@ void CameraState::camera_run(float *ts) {
 
     LOGD("b");
 
-    uint8_t *dest = (uint8_t *)buf.cur_yuv_buf->addr;
-    LOGD("c");
-    for (int32_t y = 0; y < height; y++) {
-      LOGD("d %d", y);
-      const uint8_t *src_y = y_data + (y + src_rect.top) * y_stride + src_rect.left;
-      LOGD("e %d", src_y);
-      int32_t uv_row_start = ((y + src_rect.top) / 2) * uv_stride + (src_rect.left / 2);
-      LOGD("f %d", uv_row_start);
-      const uint8_t *src_uv = v_data + uv_row_start;
-      LOGD("g %d", src_uv);
+    if (buf.cur_yuv_buf) {
+      uint8_t *dest = (uint8_t *)buf.cur_yuv_buf->addr;
+      LOGD("c");
+      for (int32_t y = 0; y < height; y++) {
+        LOGD("d %d", y);
+        const uint8_t *src_y = y_data + (y + src_rect.top) * y_stride + src_rect.left;
+        LOGD("e %d", src_y);
+        int32_t uv_row_start = ((y + src_rect.top) / 2) * uv_stride + (src_rect.left / 2);
+        LOGD("f %d", uv_row_start);
+        const uint8_t *src_uv = v_data + uv_row_start;
+        LOGD("g %d", src_uv);
 
-      memcpy(dest + y * buf.rgb_width, src_y, buf.rgb_width);
-      LOGD("h %d", dest + y * buf.rgb_width);
-      if (y % 2 == 0) {
-        // Copy U&V
-        memcpy(dest + buf.rgb_width * buf.rgb_height + (y / 2) * buf.rgb_width, src_uv, buf.rgb_width);
-        LOGD("i %d", dest + buf.rgb_width * buf.rgb_height + (y / 2) * buf.rgb_width);
+        memcpy(dest + y * buf.rgb_width, src_y, buf.rgb_width);
+        LOGD("h %d", dest + y * buf.rgb_width);
+        if (y % 2 == 0) {
+          // Copy U&V
+          memcpy(dest + buf.rgb_width * buf.rgb_height + (y / 2) * buf.rgb_width, src_uv, buf.rgb_width);
+          LOGD("i %d", dest + buf.rgb_width * buf.rgb_height + (y / 2) * buf.rgb_width);
+        }
       }
+
+      LOGD("camera_run: dest=%p", dest);
+
+      // ** metadata **
+      buf.camera_bufs_metadata[buf_idx] = {
+        .frame_id = frame_id,
+        .timestamp_eof = nanos_since_boot(),
+      };
+
+      LOGD("camera_run: frame_id=%d, timestamp_eof=%lld", frame_id, buf.camera_bufs_metadata[buf_idx].timestamp_eof);
+
+      ++frame_id;
+    } else {
+      LOGW("camera_run: no yuv buffer");
     }
-
-    LOGD("camera_run: dest=%p", dest);
-
-    // ** metadata **
-    buf.camera_bufs_metadata[buf_idx] = {
-      .frame_id = frame_id,
-      .timestamp_eof = nanos_since_boot(),
-    };
-
-    LOGD("camera_run: frame_id=%d, timestamp_eof=%lld", frame_id, buf.camera_bufs_metadata[buf_idx].timestamp_eof);
 
     // ** release image **
     AImage_delete(image);
-
-    ++frame_id;
   }
 
   native_camera->start_preview(false);
