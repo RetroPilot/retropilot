@@ -118,7 +118,7 @@ void CameraState::camera_run() {
     // ** send frame **
     FrameMetadata frame_data = {
       .frame_id = frame_id,
-      .timestamp_eof = nanos_since_boot(),
+      .timestamp_sof = nanos_since_boot(),
     };
 
     buf.send_yuv(image, frame_id, frame_data);
