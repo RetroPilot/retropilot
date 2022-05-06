@@ -3,6 +3,7 @@ moc_*
 
 _mui
 watch3
+watch_pixel3
 installer/installers/*
 replay/replay
 replay/tests/test_replay

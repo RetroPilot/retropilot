@@ -132,3 +132,7 @@ if maps:
 
   if GetOption('extras'):
     qt_env.SharedLibrary("navd/map_renderer", ["navd/map_renderer.cc"], LIBS=qt_libs + ['common', 'messaging'])
+
+if arch == "aarch64":
+  # TODO: just pixel 3?
+  qt_env.Program("watch_pixel3", ["watch_pixel3.cc"], LIBS=qt_libs + ['common', 'json11', 'zmq', 'visionipc', 'messaging'])
