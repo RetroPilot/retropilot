@@ -83,7 +83,6 @@ void CameraState::camera_run(float *ts) {
   LOGD("camera_run %d", camera_num);
 
   uint32_t frame_id = 0;
-  size_t buf_idx = 0;
 
   enum AIMAGE_FORMATS fmt = AIMAGE_FORMAT_YUV_420_888;
 
@@ -229,7 +228,6 @@ void cameras_run(MultiCameraState *s) {
 
 #if true
   std::thread t_rear = std::thread(road_camera_thread, &s->road_cam);
-  threads.push_back(std::thread(road_camera_thread, &s->road_cam));
   driver_camera_thread(&s->driver_cam);
   t_rear.join();
 #else

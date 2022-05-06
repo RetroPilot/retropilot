@@ -6,6 +6,8 @@ if arch == "aarch64":
   libs += ['gsl', 'CB', 'adreno_utils', 'EGL', 'GLESv3', 'cutils', 'ui', 'android', 'binder', 'camera2ndk', 'mediandk', 'utils']
   cameras = ['cameras/camera_android.cc', 'cameras/android/image_reader.cc', 'cameras/android/native_camera.cc']
   env = env.Clone()
+  env.Append(CXXFLAGS = '-D__ANDROID_API__=28')
+  env.Append(CXXFLAGS = '-DYUV_ONLY')
   env['LIBPATH'] = ['/system/lib64'] + env['LIBPATH']
   env['ENV']['LD_LIBRARY_PATH'] = ['/system/lib64'] + env['ENV']['LD_LIBRARY_PATH']
 elif arch == "larch64":
