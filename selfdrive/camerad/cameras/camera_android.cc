@@ -12,12 +12,12 @@
 const int ROAD_CAMERA_INDEX = util::getenv("ROADCAM_ID", 0);
 const int DRIVER_CAMERA_INDEX = util::getenv("DRIVERCAM_ID", 1);
 
-#define FRAME_WIDTH  1280
-#define FRAME_HEIGHT 720
-#define FRAME_WIDTH_FRONT  1280
-#define FRAME_HEIGHT_FRONT 720
+#define FRAME_WIDTH  1920
+#define FRAME_HEIGHT 1080
+#define FRAME_WIDTH_FRONT  1920
+#define FRAME_HEIGHT_FRONT 1080
 
-#define ROAD 0
+#define ROAD 1
 #define DRIVER 1
 
 extern ExitHandler do_exit;
@@ -116,21 +116,28 @@ void CameraState::camera_run() {
     assert(status == AMEDIA_OK && format == AIMAGE_FORMAT_YUV_420_888);
 
     // ** send frame **
-    MessageBuilder msg;
-    auto framed = msg.initEvent().initDriverCameraState();
-
     FrameMetadata frame_data = {
       .frame_id = frame_id,
       .timestamp_eof = nanos_since_boot(),
     };
 
     buf.send_yuv(image, frame_id, frame_data);
-    fill_frame_data(framed, frame_data);
 
-    framed.setImage(kj::arrayPtr((const uint8_t *)buf.cur_yuv_buf->addr, buf.cur_yuv_buf->len));
-    framed.setTransform(buf.yuv_transform.v);
+    MessageBuilder msg;
+    if (camera_num == ROAD_CAMERA_INDEX) {
+      auto framed = msg.initEvent().initRoadCameraState();
+      fill_frame_data(framed, frame_data);
+      framed.setImage(kj::arrayPtr((const uint8_t *)buf.cur_yuv_buf->addr, buf.cur_yuv_buf->len));
+      framed.setTransform(buf.yuv_transform.v);
 
-    multi_cam_state->pm->send("driverCameraState", msg);
+      multi_cam_state->pm->send("roadCameraState", msg);
+    } else if (camera_num == DRIVER_CAMERA_INDEX) {
+      auto framed = msg.initEvent().initDriverCameraState();
+      framed.setImage(kj::arrayPtr((const uint8_t *)buf.cur_yuv_buf->addr, buf.cur_yuv_buf->len));
+      framed.setTransform(buf.yuv_transform.v);
+
+      multi_cam_state->pm->send("driverCameraState", msg);
+    }
 
     // ** release image **
     AImage_delete(image);

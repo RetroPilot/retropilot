@@ -258,8 +258,8 @@ void CameraBuf::send_yuv(AImage *image, uint32_t frame_id, const FrameMetadata &
   uint8_t *dest = (uint8_t *)cur_yuv_buf->addr;
   for (int32_t y = 0; y < height; y++) {
     const uint8_t *src_y = y_data + (y + src_rect.top) * y_stride + src_rect.left;
-    int32_t uv_row_start = ((y + src_rect.top) / 2) * uv_stride + (src_rect.left / 2);
-    const uint8_t *src_uv = v_data + uv_row_start;
+    int32_t uv_row_start = ((y + src_rect.top) >> 1) * uv_stride;
+    const uint8_t *src_uv = v_data + uv_row_start + (src_rect.left >> 1);
 
     memcpy(dest + y * rgb_width, src_y, rgb_width);
     if (y % 2 == 0) {
