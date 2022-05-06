@@ -45,7 +45,9 @@ AImage *ImageReader::GetLatestImage() {
   AImage *image;
   media_status_t status = AImageReader_acquireLatestImage(reader, &image);
   if (status != AMEDIA_OK) {
-    LOGW("AImageReader_acquireLatestImage failed: %d", status);
+    if (status != AMEDIA_IMGREADER_NO_BUFFER_AVAILABLE) {
+      LOGW("AImageReader_acquireLatestImage failed: %d", status);
+    }
     return nullptr;
   }
   return image;

@@ -9,19 +9,19 @@ NativeCamera::NativeCamera(int camera_index) {
   camera_manager = ACameraManager_create();
 
   camera_status_t status = ACameraManager_getCameraIdList(camera_manager, &camera_id_list);
-  assert(status == ACAMERA_OK && camera_id_list);
+  assert(status == ACAMERA_OK);
   assert(camera_id_list->numCameras > 0);
 
   camera_id = camera_id_list->cameraIds[camera_index];
 
   ACameraMetadata *metadata;
   status = ACameraManager_getCameraCharacteristics(camera_manager, camera_id, &metadata);
-  assert(status == ACAMERA_OK && metadata);
+  assert(status == ACAMERA_OK);
   ACameraMetadata_free(metadata);
 
   status = ACameraManager_openCamera(camera_manager, camera_id,
                                      get_device_listener(), &camera_device);
-  assert(status == ACAMERA_OK && camera_device);
+  assert(status == ACAMERA_OK);
 }
 
 NativeCamera::~NativeCamera() {
@@ -104,27 +104,49 @@ void NativeCamera::create_capture_session(ANativeWindow *window) {
 
   // create output container
   status = ACaptureSessionOutputContainer_create(&capture_session_output_container);
-  assert(status == ACAMERA_OK);
+  if (status != ACAMERA_OK) {
+    LOGE("create_capture_session: failed to create output container: %d", status);
+    return;
+  }
 
   // create output to native window
   ANativeWindow_acquire(window);
   status = ACaptureSessionOutput_create(window, &capture_session_output);
-  assert(status == ACAMERA_OK);
+  if (status != ACAMERA_OK) {
+    LOGE("create_capture_session: failed to create output to native window: %d", status);
+    return;
+  }
   status = ACaptureSessionOutputContainer_add(capture_session_output_container, capture_session_output);
-  assert(status == ACAMERA_OK);
+  if (status != ACAMERA_OK) {
+    LOGE("create_capture_session: failed to add output to container: %d", status);
+    return;
+  }
   status = ACameraOutputTarget_create(window, &camera_output_target);
-  assert(status == ACAMERA_OK);
+  if (status != ACAMERA_OK) {
+    LOGE("create_capture_session: failed to create output target: %d", status);
+    return;
+  }
 
   // create capture request and add output target to it
   status = ACameraDevice_createCaptureRequest(camera_device, TEMPLATE_RECORD, &capture_request);
-  assert(status == ACAMERA_OK);
+  if (status != ACAMERA_OK) {
+    LOGE("create_capture_session: failed to create capture request: %d", status);
+    return;
+  }
   status = ACaptureRequest_addTarget(capture_request, camera_output_target);
-  assert(status == ACAMERA_OK);
+  if (status != ACAMERA_OK) {
+    LOGE("create_capture_session: failed to add output target to capture request: %d", status);
+    return;
+  }
 
   // create capture session
   status = ACameraDevice_createCaptureSession(camera_device, capture_session_output_container,
                                               get_session_listener(), &capture_session);
-  assert(status == ACAMERA_OK);
+  if (status != ACAMERA_OK) {
+    LOGE("create_capture_session: failed to create capture session: %d", status);
+    return;
+  }
+
   LOGD("create_capture_session: created capture session");
 
   // TODO: manual mode
