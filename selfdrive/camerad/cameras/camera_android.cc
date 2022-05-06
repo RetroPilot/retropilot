@@ -17,7 +17,7 @@ const int DRIVER_CAMERA_INDEX = util::getenv("DRIVERCAM_ID", 1);
 #define FRAME_WIDTH_FRONT  1280
 #define FRAME_HEIGHT_FRONT 720
 
-#define DRIVER 0
+#define ROAD 1
 
 extern ExitHandler do_exit;
 
@@ -140,7 +140,7 @@ void CameraState::camera_run() {
   native_camera->start_preview(false);
 }
 
-#if false
+#if ROAD
 static void road_camera_thread(CameraState *s) {
   util::set_thread_name("android_road_camera_thread");
   s->camera_run();
@@ -153,7 +153,7 @@ static void driver_camera_thread(CameraState *s) {
 }
 
 void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_id, cl_context ctx) {
-#if false
+#if ROAD
   LOG("*** init road camera ***");
   s->road_cam.camera_init(s, v, ROAD_CAMERA_INDEX, CAMERA_ID_IMX363, 20, device_id, ctx,
                           VISION_STREAM_RGB_ROAD, VISION_STREAM_ROAD);
@@ -168,7 +168,7 @@ void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_i
 void camera_autoexposure(CameraState *s, float grey_frac) {}
 
 void cameras_open(MultiCameraState *s) {
-#if false
+#if ROAD
   LOG("*** open road camera ***");
   s->road_cam.camera_open();
 #endif
@@ -177,7 +177,7 @@ void cameras_open(MultiCameraState *s) {
 }
 
 void cameras_close(MultiCameraState *s) {
-#if false
+#if ROAD
   LOG("*** close road camera ***");
   s->road_cam.camera_close();
 #endif
@@ -186,7 +186,7 @@ void cameras_close(MultiCameraState *s) {
   delete s->pm;
 }
 
-#if false
+#if ROAD
 void process_road_camera(MultiCameraState *s, CameraState *c, int cnt) {
   const CameraBuf *b = &c->buf;
   MessageBuilder msg;
@@ -211,12 +211,12 @@ void cameras_run(MultiCameraState *s) {
   android::ProcessState::self()->startThreadPool();
   std::vector<std::thread> threads;
 
-#if false
+#if ROAD
   threads.push_back(start_process_thread(s, &s->road_cam, process_road_camera));
 #endif
   threads.push_back(start_process_thread(s, &s->driver_cam, process_driver_camera));
 
-#if false
+#if ROAD
   std::thread t_rear = std::thread(road_camera_thread, &s->road_cam);
   driver_camera_thread(&s->driver_cam);
   t_rear.join();
