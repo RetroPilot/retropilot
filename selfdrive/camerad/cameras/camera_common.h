@@ -1,30 +1,18 @@
 #pragma once
 
-#include <cassert>
-#include <chrono>
 #include <cstdint>
-#include <cstdio>
 #include <cstdlib>
 #include <memory>
 #include <thread>
-
-#include "libyuv.h"
-#include <jpeglib.h>
-#include <unistd.h>
 
 #include "cereal/messaging/messaging.h"
 #include "cereal/visionipc/visionbuf.h"
 #include "cereal/visionipc/visionipc.h"
 #include "cereal/visionipc/visionipc_server.h"
-#include "selfdrive/camerad/imgproc/utils.h"
 #include "selfdrive/camerad/transforms/rgb_to_yuv.h"
-#include "selfdrive/common/clutil.h"
 #include "selfdrive/common/mat.h"
-#include "selfdrive/common/modeldata.h"
-#include "selfdrive/common/params.h"
 #include "selfdrive/common/queue.h"
 #include "selfdrive/common/swaglog.h"
-#include "selfdrive/common/util.h"
 #include "selfdrive/common/visionimg.h"
 #include "selfdrive/hardware/hw.h"
 
