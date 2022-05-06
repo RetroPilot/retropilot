@@ -80,6 +80,7 @@ void CameraState::camera_run(float *ts) {
   LOGD("camera_run %d", camera_num);
 
   uint32_t frame_id = 0;
+  size_t buf_idx = 0;
 
   enum AIMAGE_FORMATS fmt = AIMAGE_FORMAT_YUV_420_888;
 
@@ -103,6 +104,7 @@ void CameraState::camera_run(float *ts) {
 
     LOGD("camera_run: image=%p", image);
 
+    // ** debug **
     media_status_t status;
 
     int32_t planeCount;
@@ -112,18 +114,46 @@ void CameraState::camera_run(float *ts) {
     status = AImage_getFormat(image, &format);
     assert(status == AMEDIA_OK && format == AIMAGE_FORMAT_YUV_420_888);
 
+    // ** transform image **
+    int32_t y_stride, uv_stride;
+    int32_t uv_pixel_stride;
+    int32_t y_len, u_len, v_len;
     uint8_t *y_data, *u_data, *v_data;
-    int y_len, u_len, v_len;
+    AImageCropRect src_rect;
 
-    status = AImage_getPlaneData(image, 0, &y_data, &y_len);
-    assert(status == AMEDIA_OK);
-    status = AImage_getPlaneData(image, 1, &u_data, &u_len);
-    assert(status == AMEDIA_OK);
-    status = AImage_getPlaneData(image, 2, &v_data, &v_len);
-    assert(status == AMEDIA_OK);
+    AImage_getPlaneRowStride(image, 0, &y_stride);
+    AImage_getPlaneRowStride(image, 1, &uv_stride);
+    AImage_getPlanePixelStride(image, 1, &uv_pixel_stride);
+    AImage_getPlaneData(image, 0, &y_data, &y_len);
+    AImage_getPlaneData(image, 1, &u_data, &u_len);
+    AImage_getPlaneData(image, 2, &v_data, &v_len);
+    AImage_getCropRect(image, &src_rect);
 
-    LOGD("camera_run: y_data=%p, u_data=%p, v_data=%p", y_data, u_data, v_data);
-    LOGD("camera_run: y_len=%d, u_len=%d, v_len=%d", y_len, u_len, v_len);
+    // NV21 U/V interleaved format
+    assert(uv_pixel_stride == 2);
+    assert(u_data == v_data + 1);
+
+    int32_t height = std::min(buf.rgb_height, (src_rect.bottom - src_rect.top));
+    // int32_t width = std::min(buf.rgb_width, (src_rect.right - src_rect.left));
+
+    uint8_t *dest = (uint8_t *)buf.cur_yuv_buf->addr;
+    for (int32_t y = 0; y < height; y++) {
+      const uint8_t *src_y = y_data + (y + src_rect.top) * y_stride + src_rect.left;
+      int32_t uv_row_start = ((y + src_rect.top) / 2) * uv_stride + (src_rect.left / 2);
+      const uint8_t *src_uv = v_data + uv_row_start;
+
+      memcpy(dest + y * buf.rgb_width, src_y, buf.rgb_width);
+      if (y % 2 == 0) {
+        // Copy U&V
+        memcpy(dest + buf.rgb_width * buf.rgb_height + (y / 2) * buf.rgb_width, src_uv, buf.rgb_width);
+      }
+    }
+
+    // ** metadata **
+    buf.camera_bufs_metadata[buf_idx] = {
+      .frame_id = frame_id,
+      .timestamp_eof = nanos_since_boot(),
+    };
 
     // ** release image **
     AImage_delete(image);
