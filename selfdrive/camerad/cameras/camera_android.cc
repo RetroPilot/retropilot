@@ -98,11 +98,21 @@ void CameraState::camera_run() {
 
   native_camera->start_preview(true);
 
+  double time = nanos_since_boot() * 1e-9;
+  int frame_count = 0;
+
   while (!do_exit) {
     AImage *image = image_reader->GetLatestImage();
     if (!image) {
       util::sleep_for(1);
       continue;
+    }
+
+    frame_count++;
+    if (frame_count % 100 == 0) {
+      LOGD("camera_run: fps %.2f", 100.0 / (nanos_since_boot() * 1e-9 - time));
+      time = nanos_since_boot() * 1e-9;
+      frame_count = 0;
     }
 
     // ** debug **
