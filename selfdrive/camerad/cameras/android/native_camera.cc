@@ -128,7 +128,7 @@ void NativeCamera::create_capture_session(ANativeWindow *window) {
   }
 
   // create capture request and add output target to it
-  status = ACameraDevice_createCaptureRequest(camera_device, TEMPLATE_RECORD, &capture_request);
+  status = ACameraDevice_createCaptureRequest(camera_device, TEMPLATE_PREVIEW, &capture_request);
   if (status != ACAMERA_OK) {
     LOGE("create_capture_session: failed to create capture request: %d", status);
     return;
