@@ -160,9 +160,7 @@ CameraBuf::~CameraBuf() {
 }
 
 bool CameraBuf::acquire() {
-  LOGD("CameraBuf::acquire");
   if (!safe_queue.try_pop(cur_buf_idx, 1)) return false;
-  LOGD("CameraBuf::acquire: got buf %d", cur_buf_idx);
 
   if (camera_bufs_metadata[cur_buf_idx].frame_id == -1) {
     LOGE("no frame data? wtf");
