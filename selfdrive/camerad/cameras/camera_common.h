@@ -89,6 +89,9 @@ typedef struct CameraExpInfo {
 struct MultiCameraState;
 struct CameraState;
 class Debayer;
+#ifdef YUV_ONLY
+class AImage;
+#endif
 
 class CameraBuf {
 private:
@@ -123,6 +126,9 @@ public:
   bool acquire();
   void release();
   void queue(size_t buf_idx);
+#ifdef YUV_ONLY
+  void send_yuv(AImage *image, uint32_t frame_id, const FrameMetadata &meta_data);
+#endif
 };
 
 typedef void (*process_thread_cb)(MultiCameraState *s, CameraState *c, int cnt);

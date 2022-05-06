@@ -9,6 +9,7 @@
 
 #include "libyuv.h"
 #include <jpeglib.h>
+#include <kj/array.h>
 
 #include "selfdrive/camerad/imgproc/utils.h"
 #include "selfdrive/common/clutil.h"
@@ -20,7 +21,11 @@
 
 #ifdef QCOM
 #include "CL/cl_ext_qcom.h"
+#ifdef ANDROID_9
 #include "selfdrive/camerad/cameras/camera_android.h"
+#else
+#include "selfdrive/camerad/cameras/camera_qcom.h"
+#endif
 #elif QCOM2
 #include "CL/cl_ext_qcom.h"
 #include "selfdrive/camerad/cameras/camera_qcom2.h"
@@ -28,6 +33,10 @@
 #include "selfdrive/camerad/cameras/camera_webcam.h"
 #else
 #include "selfdrive/camerad/cameras/camera_replay.h"
+#endif
+
+#ifdef YUV_ONLY
+#include <media/NdkImageReader.h>
 #endif
 
 ExitHandler do_exit;
@@ -172,8 +181,10 @@ bool CameraBuf::acquire() {
     float gain = 0.0;
 
 #ifndef QCOM2
+#ifndef ANDROID_9
     gain = camera_state->digital_gain;
     if ((int)gain == 0) gain = 1.0;
+#endif
 #endif
 
     debayer->queue(q, camrabuf_cl, cur_rgb_buf->buf_cl, rgb_width, rgb_height, gain, &event);
@@ -212,6 +223,55 @@ void CameraBuf::release() {
 void CameraBuf::queue(size_t buf_idx) {
   safe_queue.push(buf_idx);
 }
+
+#ifdef YUV_ONLY
+void CameraBuf::send_yuv(AImage *image, uint32_t frame_id, const FrameMetadata &frame_data) {
+  cur_yuv_buf = vipc_server->get_buffer(yuv_type);
+
+  int32_t y_stride, uv_stride;
+  int32_t uv_pixel_stride;
+  int32_t y_len, u_len, v_len;
+  uint8_t *y_data, *u_data, *v_data;
+  AImageCropRect src_rect;
+
+  AImage_getPlaneRowStride(image, 0, &y_stride);
+  AImage_getPlaneRowStride(image, 1, &uv_stride);
+  AImage_getPlanePixelStride(image, 1, &uv_pixel_stride);
+  AImage_getPlaneData(image, 0, &y_data, &y_len);
+  AImage_getPlaneData(image, 1, &u_data, &u_len);
+  AImage_getPlaneData(image, 2, &v_data, &v_len);
+  AImage_getCropRect(image, &src_rect);
+
+  // NV21 U/V interleaved format
+  assert(uv_pixel_stride == 2);
+  assert(u_data == v_data + 1);
+
+  int32_t height = std::min(rgb_height, (src_rect.bottom - src_rect.top));
+  // int32_t width = std::min(rgb_width, (src_rect.right - src_rect.left));
+
+  uint8_t *dest = (uint8_t *)cur_yuv_buf->addr;
+  for (int32_t y = 0; y < height; y++) {
+    const uint8_t *src_y = y_data + (y + src_rect.top) * y_stride + src_rect.left;
+    int32_t uv_row_start = ((y + src_rect.top) / 2) * uv_stride + (src_rect.left / 2);
+    const uint8_t *src_uv = v_data + uv_row_start;
+
+    memcpy(dest + y * rgb_width, src_y, rgb_width);
+    if (y % 2 == 0) {
+      // Copy U&V
+      memcpy(dest + rgb_width * rgb_height + (y / 2) * rgb_width, src_uv, rgb_width);
+    }
+  }
+
+  cur_yuv_buf->set_frame_id(frame_id);
+  VisionIpcBufExtra extra = {
+    frame_data.frame_id,
+    frame_data.timestamp_sof,
+    frame_data.timestamp_eof,
+  };
+
+  vipc_server->send(cur_yuv_buf, &extra, true);
+}
+#endif
 
 // common functions
 

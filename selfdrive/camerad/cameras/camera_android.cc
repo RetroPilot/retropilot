@@ -3,7 +3,10 @@
 #include <binder/ProcessState.h>
 #include <camera/NdkCameraError.h>
 
+#include "selfdrive/common/clutil.h"
+#include "selfdrive/common/timing.h"
 #include "selfdrive/common/swaglog.h"
+#include "selfdrive/common/util.h"
 
 // id of the video capturing device
 const int ROAD_CAMERA_INDEX = util::getenv("ROADCAM_ID", 0);
@@ -116,73 +119,27 @@ void CameraState::camera_run(float *ts) {
 
     LOGD("camera_run: planeCount=%d, format=%d", image, planeCount, format);
 
-    // ** transform image **
-    int32_t y_stride, uv_stride;
-    int32_t uv_pixel_stride;
-    int32_t y_len, u_len, v_len;
-    uint8_t *y_data, *u_data, *v_data;
-    AImageCropRect src_rect;
+    // ** send frame **
+    MessageBuilder msg;
+    auto framed = msg.initEvent().initRoadCameraState();
 
-    AImage_getPlaneRowStride(image, 0, &y_stride);
-    AImage_getPlaneRowStride(image, 1, &uv_stride);
-    AImage_getPlanePixelStride(image, 1, &uv_pixel_stride);
-    AImage_getPlaneData(image, 0, &y_data, &y_len);
-    AImage_getPlaneData(image, 1, &u_data, &u_len);
-    AImage_getPlaneData(image, 2, &v_data, &v_len);
-    AImage_getCropRect(image, &src_rect);
+    FrameMetadata frame_data = {
+      .frame_id = frame_id,
+      .timestamp_eof = nanos_since_boot(),
+    };
 
-    LOGD("camera_run: y_stride=%d, uv_stride=%d, uv_pixel_stride=%d, y_len=%d, u_len=%d, v_len=%d, src_rect=(%d, %d, %d, %d)",
-         y_stride, uv_stride, uv_pixel_stride, y_len, u_len, v_len, src_rect.left, src_rect.top, src_rect.right, src_rect.bottom);
+    buf.send_yuv(image, frame_id, frame_data);
+    fill_frame_data(framed, frame_data);
 
-    // NV21 U/V interleaved format
-    assert(uv_pixel_stride == 2);
-    assert(u_data == v_data + 1);
+    framed.setImage(kj::arrayPtr((const uint8_t *)buf.cur_yuv_buf->addr, buf.cur_yuv_buf->len));
+    framed.setTransform(buf.yuv_transform.v);
 
-    LOGD("a");
-
-    int32_t height = std::min(buf.rgb_height, (src_rect.bottom - src_rect.top));
-    // int32_t width = std::min(buf.rgb_width, (src_rect.right - src_rect.left));
-
-    LOGD("b");
-
-    if (buf.cur_yuv_buf) {
-      uint8_t *dest = (uint8_t *)buf.cur_yuv_buf->addr;
-      LOGD("c");
-      for (int32_t y = 0; y < height; y++) {
-        LOGD("d %d", y);
-        const uint8_t *src_y = y_data + (y + src_rect.top) * y_stride + src_rect.left;
-        LOGD("e %d", src_y);
-        int32_t uv_row_start = ((y + src_rect.top) / 2) * uv_stride + (src_rect.left / 2);
-        LOGD("f %d", uv_row_start);
-        const uint8_t *src_uv = v_data + uv_row_start;
-        LOGD("g %d", src_uv);
-
-        memcpy(dest + y * buf.rgb_width, src_y, buf.rgb_width);
-        LOGD("h %d", dest + y * buf.rgb_width);
-        if (y % 2 == 0) {
-          // Copy U&V
-          memcpy(dest + buf.rgb_width * buf.rgb_height + (y / 2) * buf.rgb_width, src_uv, buf.rgb_width);
-          LOGD("i %d", dest + buf.rgb_width * buf.rgb_height + (y / 2) * buf.rgb_width);
-        }
-      }
-
-      LOGD("camera_run: dest=%p", dest);
-
-      // ** metadata **
-      buf.camera_bufs_metadata[buf_idx] = {
-        .frame_id = frame_id,
-        .timestamp_eof = nanos_since_boot(),
-      };
-
-      LOGD("camera_run: frame_id=%d, timestamp_eof=%lld", frame_id, buf.camera_bufs_metadata[buf_idx].timestamp_eof);
-
-      ++frame_id;
-    } else {
-      LOGW("camera_run: no yuv buffer");
-    }
+    multi_cam_state->pm->send("roadCameraState", msg);
 
     // ** release image **
     AImage_delete(image);
+
+    ++frame_id;
   }
 
   native_camera->start_preview(false);
@@ -202,7 +159,6 @@ static void road_camera_thread(CameraState *s) {
   s->camera_run(ts);
 }
 
-#if DRIVER
 static void driver_camera_thread(CameraState *s) {
   util::set_thread_name("android_driver_camera_thread");
 
@@ -216,17 +172,14 @@ static void driver_camera_thread(CameraState *s) {
   //                 0.0, 0.0, 1.0};
   s->camera_run(ts);
 }
-#endif
 
 void cameras_init(VisionIpcServer *v, MultiCameraState *s, cl_device_id device_id, cl_context ctx) {
   LOG("*** init road camera ***");
   s->road_cam.camera_init(s, v, ROAD_CAMERA_INDEX, CAMERA_ID_IMX363, 20, device_id, ctx,
                           VISION_STREAM_RGB_ROAD, VISION_STREAM_ROAD);
-#if DRIVER
   LOG("*** init driver camera ***");
   s->driver_cam.camera_init(s, v, DRIVER_CAMERA_INDEX, CAMERA_ID_IMX355, 10, device_id, ctx,
                             VISION_STREAM_RGB_DRIVER, VISION_STREAM_DRIVER);
-#endif
 
   s->pm = new PubMaster({"roadCameraState", "driverCameraState", "thumbnail"});
 }
@@ -236,23 +189,18 @@ void camera_autoexposure(CameraState *s, float grey_frac) {}
 void cameras_open(MultiCameraState *s) {
   LOG("*** open road camera ***");
   s->road_cam.camera_open();
-#if DRIVER
   LOG("*** open driver camera ***");
   s->driver_cam.camera_open();
-#endif
 }
 
 void cameras_close(MultiCameraState *s) {
   LOG("*** close road camera ***");
   s->road_cam.camera_close();
-#if DRIVER
   LOG("*** close driver camera ***");
   s->driver_cam.camera_close();
   delete s->pm;
-#endif
 }
 
-#if DRIVER
 void process_driver_camera(MultiCameraState *s, CameraState *c, int cnt) {
   MessageBuilder msg;
   auto framed = msg.initEvent().initDriverCameraState();
@@ -260,25 +208,15 @@ void process_driver_camera(MultiCameraState *s, CameraState *c, int cnt) {
   fill_frame_data(framed, c->buf.cur_frame_data);
   s->pm->send("driverCameraState", msg);
 }
-#endif
 
 void process_road_camera(MultiCameraState *s, CameraState *c, int cnt) {
   const CameraBuf *b = &c->buf;
   MessageBuilder msg;
-#if DRIVER
   auto framed = msg.initEvent().initRoadCameraState();
-#else
-  auto framed = msg.initEvent().initDriverCameraState();
-  framed.setFrameType(cereal::FrameData::FrameType::FRONT);
-#endif
   fill_frame_data(framed, b->cur_frame_data);
   framed.setImage(kj::arrayPtr((const uint8_t *)b->cur_yuv_buf->addr, b->cur_yuv_buf->len));
   framed.setTransform(b->yuv_transform.v);
-#if DRIVER
   s->pm->send("roadCameraState", msg);
-#else
-  s->pm->send("driverCameraState", msg);
-#endif
 }
 
 void cameras_run(MultiCameraState *s) {
@@ -287,11 +225,9 @@ void cameras_run(MultiCameraState *s) {
   std::vector<std::thread> threads;
 
   threads.push_back(start_process_thread(s, &s->road_cam, process_road_camera));
-#if DRIVER
   threads.push_back(start_process_thread(s, &s->driver_cam, process_driver_camera));
-#endif
 
-#if DRIVER
+#if true
   std::thread t_rear = std::thread(road_camera_thread, &s->road_cam);
   threads.push_back(std::thread(road_camera_thread, &s->road_cam));
   driver_camera_thread(&s->driver_cam);
