@@ -374,6 +374,13 @@ selfdrive/camerad/main.cc
 
 selfdrive/camerad/snapshot/*
 selfdrive/camerad/include/*
+selfdrive/camerad/cameras/android/display_dimension.h
+selfdrive/camerad/cameras/android/image_format.h
+selfdrive/camerad/cameras/android/image_reader.cc
+selfdrive/camerad/cameras/android/image_reader.h
+selfdrive/camerad/cameras/android/native_camera.cc
+selfdrive/camerad/cameras/android/native_camera.h
+selfdrive/camerad/cameras/android/util.h
 selfdrive/camerad/cameras/camera_android.cc
 selfdrive/camerad/cameras/camera_android.h
 selfdrive/camerad/cameras/camera_common.h
@@ -489,6 +496,7 @@ third_party/acados/include/**
 
 third_party/android_frameworks_native/**
 third_party/android_hardware_libhardware/**
+third_party/android_headers_9/**
 third_party/android_system_core/**
 
 scripts/update_now.sh
