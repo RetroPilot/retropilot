@@ -14,11 +14,11 @@ const int DRIVER_CAMERA_INDEX = util::getenv("DRIVERCAM_ID", 1);
 
 #define FRAME_WIDTH  1920
 #define FRAME_HEIGHT 1080
-#define FRAME_WIDTH_FRONT  640
-#define FRAME_HEIGHT_FRONT 360
+#define FRAME_WIDTH_FRONT  1920
+#define FRAME_HEIGHT_FRONT 1080
 
 #define ROAD 1
-#define DRIVER 0
+#define DRIVER 1
 
 extern ExitHandler do_exit;
 
