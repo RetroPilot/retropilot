@@ -66,7 +66,7 @@ def auth_redirect_link(method):
   }[method]
 
   params = {
-    'redirect_uri': f"https://api.comma.ai/v2/auth/{provider_id}/redirect/",
+    'redirect_uri': f"https://api.retropilot.org/v2/auth/{provider_id}/redirect/",
     'state': f'service,localhost:{PORT}',
   }
 
