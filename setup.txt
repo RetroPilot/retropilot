@@ -1,7 +1,0 @@
-su -c 'HOME=/data/data/com.termux/files/home PATH="/data/data/com.termux/files/usr/bin:/bin" LD_LIBRARY_PATH="/data/data/com.termux/files/usr/lib" bash'
-mkdir -p /tmp && mount -t tmpfs -o size=2048M tmpfs /tmp
-sshd
-cd /data/openpilot
-tmux
-
-./launch_openpilot.sh
