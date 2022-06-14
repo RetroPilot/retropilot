@@ -92,6 +92,7 @@ if arch == "aarch64" or arch == "larch64":
     "/usr/local/lib",
     "/usr/lib",
     "/system/vendor/lib64",
+    "/usr/local/lib64",
     f"#third_party/acados/{arch}/lib",
   ]
 

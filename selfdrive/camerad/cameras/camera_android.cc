@@ -1,5 +1,13 @@
 #include "selfdrive/camerad/cameras/camera_android.h"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wundefined-inline"
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/opencv.hpp>
+#include <opencv2/videoio.hpp>
+#pragma clang diagnostic pop
+
 #include <binder/ProcessState.h>
 #include <camera/NdkCameraError.h>
 
@@ -18,7 +26,9 @@ const int DRIVER_CAMERA_INDEX = util::getenv("DRIVERCAM_ID", 1);
 #define FRAME_HEIGHT_FRONT 1080
 
 #define ROAD 1
-#define DRIVER 1
+//#define DRIVER 1
+
+using namespace cv;
 
 extern ExitHandler do_exit;
 
@@ -101,12 +111,19 @@ void CameraState::camera_run() {
   double time = nanos_since_boot() * 1e-9;
   int frame_count = 0;
 
+  cv::VideoWriter video("cv_outvid.mp4", cv::VideoWriter::fourcc('M','P','4','V'), 20, Size(FRAME_WIDTH,FRAME_HEIGHT));
+
   while (!do_exit) {
+    cv::Mat frame_mat;
     AImage *image = image_reader->GetLatestImage();
     if (!image) {
       util::sleep_for(1);
       continue;
     }
+
+    // TODO: convert NDK capture into a CV Mat and handle the warp
+    //image >> frame_mat;
+    //video.write(frame_mat);
 
     frame_count++;
     if (frame_count % 100 == 0) {

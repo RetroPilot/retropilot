@@ -3,11 +3,12 @@ Import('env', 'arch', 'cereal', 'messaging', 'common', 'gpucommon', 'visionipc',
 libs = ['m', 'pthread', common, 'jpeg', 'OpenCL', 'yuv', cereal, messaging, 'zmq', 'capnp', 'kj', visionipc, gpucommon]
 
 if arch == "aarch64":
-  libs += ['gsl', 'CB', 'adreno_utils', 'EGL', 'GLESv3', 'cutils', 'ui', 'android', 'binder', 'camera2ndk', 'mediandk', 'utils']
+  libs += ['gsl', 'CB', 'adreno_utils', 'EGL', 'GLESv3', 'cutils', 'ui', 'android', 'binder', 'camera2ndk', 'mediandk', 'utils', 'opencv_core', 'opencv_highgui', 'opencv_imgproc', 'opencv_videoio']
   cameras = ['cameras/camera_android.cc', 'cameras/android/image_reader.cc', 'cameras/android/native_camera.cc']
   env = env.Clone()
   env.Append(CXXFLAGS = '-D__ANDROID_API__=28')
   env.Append(CXXFLAGS = '-DYUV_ONLY')
+  env.Append(CPPPATH = ['/usr/local/include/opencv4'])
   env['LIBPATH'] = ['/system/lib64'] + env['LIBPATH']
   env['ENV']['LD_LIBRARY_PATH'] = ['/system/lib64'] + env['ENV']['LD_LIBRARY_PATH']
 elif arch == "larch64":
