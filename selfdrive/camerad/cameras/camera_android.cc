@@ -152,13 +152,21 @@ void CameraState::camera_run(CameraState *s) {
 
     cv::Mat yuvMat(FRAME_HEIGHT, FRAME_WIDTH, CV_8UC1, &buff);
 
+    // cv transform and capture
+    cv::Mat transformed_mat;
+    float ts[9] = {1.50330396, 0.0, -59.40969163,
+                  0.0, 1.50330396, 76.20704846,
+                  0.0, 0.0, 1.0};
+    const cv::Mat transform = cv::Mat(3, 3, CV_32F, ts);
+    cv::Size size(FRAME_WIDTH, FRAME_HEIGHT);
+    cv::warpPerspective(yuvMat, transformed_mat, transform, size, cv::INTER_LINEAR, cv::BORDER_CONSTANT, 0);
+
     if ((frame_count % 100 == 0) && !snap_taken ){
       imwrite("/sdcard/Download/cv_out.png", yuvMat);
       snap_taken = 1;
     }
 
     // video.write(yuvMat);
-    //TODO: warp CV Mat and publish it as frame
 
     frame_count++;
     if (frame_count % 100 == 0) {
