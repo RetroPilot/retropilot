@@ -24,8 +24,10 @@ const int DRIVER_CAMERA_INDEX = util::getenv("DRIVERCAM_ID", 1);
 
 //TODO: get supported resolution from param
 
-#define FRAME_WIDTH  1920
-#define FRAME_HEIGHT 1080
+#define FRAME_WIDTH  1164
+#define FRAME_HEIGHT 874
+#define NDK_WIDTH 1920
+#define NDK_HEIGHT 1080
 #define FRAME_WIDTH_FRONT  1920
 #define FRAME_HEIGHT_FRONT 1080
 
@@ -102,7 +104,9 @@ void CameraState::camera_run(CameraState *s) {
   enum AIMAGE_FORMATS fmt = AIMAGE_FORMAT_YUV_420_888;
 
   native_camera = new NativeCamera(camera_num);
-  native_camera->match_capture_size_request(&view, ci.frame_width, ci.frame_height, fmt);
+  //native_camera->match_capture_size_request(&view, ci.frame_width, ci.frame_height, fmt);
+  // TODO: collect supported camera resolution from a parameter
+  native_camera->match_capture_size_request(&view, NDK_WIDTH, NDK_HEIGHT, fmt);
   assert(view.width && view.height);
 
   image_reader = new ImageReader(&view, fmt);
@@ -115,9 +119,7 @@ void CameraState::camera_run(CameraState *s) {
   double time = nanos_since_boot() * 1e-9;
   int frame_count = 0;
 
-  // write camera out to video (testing)
-  //cv::VideoWriter video("cv_outvid.mp4", cv::VideoWriter::fourcc('h','2','6','4'), 20, Size(FRAME_WIDTH,FRAME_HEIGHT));
-  //size_t buf_idx = 0;
+  size_t buf_idx = 0;
 
   bool snap_taken = 0;
 
@@ -127,46 +129,53 @@ void CameraState::camera_run(CameraState *s) {
       util::sleep_for(1);
       continue;
     }
-    //cv::Mat frame_mat(cv::Size(FRAME_HEIGHT, FRAME_WIDTH), CV_8UC3, image);
     
     // convert NDK capture into a CV Mat
-    //image >> frame_mat;
 
-    uint8_t *dataY = nullptr;
-    uint8_t *dataU = nullptr;
-    uint8_t *dataV = nullptr;
+    int32_t y_stride, uv_stride;
+    int32_t uv_pixel_stride;
+    int32_t y_len, u_len, v_len;
+    uint8_t *y_data, *u_data, *v_data;
+    AImageCropRect src_rect;
 
-    int lenY = 0;
-    int lenU = 0;
-    int lenV = 0;
+    AImage_getPlaneRowStride(image, 0, &y_stride);
+    AImage_getPlaneRowStride(image, 1, &uv_stride);
+    AImage_getPlanePixelStride(image, 1, &uv_pixel_stride);
+    AImage_getPlaneData(image, 0, &y_data, &y_len);
+    AImage_getPlaneData(image, 1, &u_data, &u_len);
+    AImage_getPlaneData(image, 2, &v_data, &v_len);
+    AImage_getCropRect(image, &src_rect);
 
-    AImage_getPlaneData(image, 0, (uint8_t**)&dataY, &lenY);
-    AImage_getPlaneData(image, 1, (uint8_t**)&dataU, &lenU);
-    AImage_getPlaneData(image, 2, (uint8_t**)&dataV, &lenV);
+    // NV21 U/V interleaved format
+    assert(uv_pixel_stride == 2);
+    assert(u_data == v_data + 1);
 
-    uchar buff[lenY+lenU+lenV];
+    uchar buff[y_len+u_len+v_len];
 
-    memcpy(buff+0,dataY,lenY);
-    memcpy(buff+lenY,dataV,lenV);
-    memcpy(buff+lenY+lenV,dataU,lenU);
+    memcpy(buff+0,y_data,y_len);
+    memcpy(buff+y_len,u_data,v_len);
+    memcpy(buff+y_len+v_len,u_data,u_len);
+    
+    // shove buffer into a CV mat for later processing
+    cv::Mat yuvMat(NDK_HEIGHT, NDK_WIDTH, CV_8UC1, &buff);
 
-    cv::Mat yuvMat(FRAME_HEIGHT, FRAME_WIDTH, CV_8UC1, &buff);
-
-    // cv transform and capture
+    // cv transform to C2 spec
     cv::Mat transformed_mat;
-    float ts[9] = {1.50330396, 0.0, -59.40969163,
-                  0.0, 1.50330396, 76.20704846,
-                  0.0, 0.0, 1.0};
+//    float ts[9] = {1.50330396, 0.0, -59.40969163,
+//                  0.0, 1.50330396, 76.20704846,
+//                  0.0, 0.0, 1.0};
+    float ts[9] = {0.5803214805005242, 0.0, 34.466683147755475,
+                   0.0, 0.5803214805005242, 17.137408857870753,
+                   0.0, 0.0, 1.0};
     const cv::Mat transform = cv::Mat(3, 3, CV_32F, ts);
-    cv::Size size(FRAME_WIDTH, FRAME_HEIGHT);
+    cv::Size size(1164, 874);
     cv::warpPerspective(yuvMat, transformed_mat, transform, size, cv::INTER_LINEAR, cv::BORDER_CONSTANT, 0);
-
+    
+    // DEBUG: save PNG of 100th frame
     if ((frame_count % 100 == 0) && !snap_taken ){
       imwrite("/sdcard/Download/cv_out.png", yuvMat);
       snap_taken = 1;
     }
-
-    // video.write(yuvMat);
 
     frame_count++;
     if (frame_count % 100 == 0) {
@@ -191,14 +200,16 @@ void CameraState::camera_run(CameraState *s) {
       .timestamp_eof = nanos_since_boot(),
     };
 
-    // send yuvMat
-    // s->buf.camera_bufs_metadata[buf_idx] = {.frame_id = frame_id};
-    // auto &buf2 = s->buf.camera_bufs[buf_idx];
-    // int transformed_size = yuvMat.total() * yuvMat.elemSize();
-    // CL_CHECK(clEnqueueWriteBuffer(buf2.copy_q, buf2.buf_cl, CL_TRUE, 0, transformed_size, yuvMat.data, 0, NULL, NULL));
-    // s->buf.queue(buf_idx);
+    // send transformed_mat cv::Mat
+    s->buf.camera_bufs_metadata[buf_idx] = {.frame_id = frame_id};
+    auto &buf2 = s->buf.camera_bufs[buf_idx];
+    int transformed_size = transformed_mat.total() * transformed_mat.elemSize();
+    clEnqueueWriteBuffer(buf2.copy_q, buf2.buf_cl, CL_TRUE, 0, transformed_size, transformed_mat.data, 0, NULL, NULL);
+    s->buf.queue(buf_idx);
+    buf_idx = (buf_idx + 1) % 16;
 
-    buf.send_yuv(image, frame_id, frame_data);
+    // send AImage
+    // buf.send_yuv(image, frame_id, frame_data);
 
     MessageBuilder msg;
     if (camera_num == ROAD_CAMERA_INDEX) {
