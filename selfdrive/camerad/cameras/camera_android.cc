@@ -7,6 +7,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/videoio.hpp>
 #include <opencv2/core/hal/interface.h>
+#include <opencv2/imgcodecs/imgcodecs.hpp>
 #pragma clang diagnostic pop
 
 #include <binder/ProcessState.h>
@@ -93,7 +94,7 @@ void CameraState::camera_init(MultiCameraState *multi_cam_state_, VisionIpcServe
   // }
 }
 
-void CameraState::camera_run() {
+void CameraState::camera_run(CameraState *s) {
   LOGD("camera_run %d", camera_num);
 
   uint32_t frame_id = 0;
@@ -115,7 +116,10 @@ void CameraState::camera_run() {
   int frame_count = 0;
 
   // write camera out to video (testing)
-  cv::VideoWriter video("cv_outvid.mp4", cv::VideoWriter::fourcc('h','2','6','4'), 20, Size(FRAME_WIDTH,FRAME_HEIGHT));
+  //cv::VideoWriter video("cv_outvid.mp4", cv::VideoWriter::fourcc('h','2','6','4'), 20, Size(FRAME_WIDTH,FRAME_HEIGHT));
+  //size_t buf_idx = 0;
+
+  bool snap_taken = 0;
 
   while (!do_exit) {
     AImage *image = image_reader->GetLatestImage();
@@ -125,7 +129,7 @@ void CameraState::camera_run() {
     }
     //cv::Mat frame_mat(cv::Size(FRAME_HEIGHT, FRAME_WIDTH), CV_8UC3, image);
     
-    // TODO: convert NDK capture into a CV Mat and handle the warp
+    // convert NDK capture into a CV Mat
     //image >> frame_mat;
 
     uint8_t *dataY = nullptr;
@@ -140,15 +144,21 @@ void CameraState::camera_run() {
     AImage_getPlaneData(image, 1, (uint8_t**)&dataU, &lenU);
     AImage_getPlaneData(image, 2, (uint8_t**)&dataV, &lenV);
 
-    char buff[lenY+lenU+lenV];
+    uchar buff[lenY+lenU+lenV];
 
     memcpy(buff+0,dataY,lenY);
     memcpy(buff+lenY,dataV,lenV);
     memcpy(buff+lenY+lenV,dataU,lenU);
 
-    cv::Mat yuvMat(FRAME_HEIGHT + FRAME_HEIGHT/2, FRAME_WIDTH, CV_8UC1, &buff);
+    cv::Mat yuvMat(FRAME_HEIGHT, FRAME_WIDTH, CV_8UC1, &buff);
 
-    video.write(yuvMat);
+    if ((frame_count % 100 == 0) && !snap_taken ){
+      imwrite("/sdcard/Download/cv_out.png", yuvMat);
+      snap_taken = 1;
+    }
+
+    // video.write(yuvMat);
+    //TODO: warp CV Mat and publish it as frame
 
     frame_count++;
     if (frame_count % 100 == 0) {
@@ -174,8 +184,11 @@ void CameraState::camera_run() {
     };
 
     // send yuvMat
-    //int transformed_size = yuvMat.total() * yuvMat.elemSize();
-    //CL_CHECK(clEnqueueWriteBuffer(buf.copy_q, buf.buf_cl, CL_TRUE, 0, transformed_size, yuvMat.data, 0, NULL, NULL));
+    // s->buf.camera_bufs_metadata[buf_idx] = {.frame_id = frame_id};
+    // auto &buf2 = s->buf.camera_bufs[buf_idx];
+    // int transformed_size = yuvMat.total() * yuvMat.elemSize();
+    // CL_CHECK(clEnqueueWriteBuffer(buf2.copy_q, buf2.buf_cl, CL_TRUE, 0, transformed_size, yuvMat.data, 0, NULL, NULL));
+    // s->buf.queue(buf_idx);
 
     buf.send_yuv(image, frame_id, frame_data);
 
@@ -202,7 +215,7 @@ void CameraState::camera_run() {
   }
 
   //release video writer
-  video.release();
+  //video.release();
 
   native_camera->start_preview(false);
 }
@@ -210,14 +223,14 @@ void CameraState::camera_run() {
 #if ROAD
 static void road_camera_thread(CameraState *s) {
   util::set_thread_name("android_road_camera_thread");
-  s->camera_run();
+  s->camera_run(s);
 }
 #endif
 
 #if DRIVER
 static void driver_camera_thread(CameraState *s) {
   util::set_thread_name("android_driver_camera_thread");
-  s->camera_run();
+  s->camera_run(s);
 }
 #endif
 

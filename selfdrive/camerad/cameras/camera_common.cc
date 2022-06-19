@@ -23,6 +23,7 @@
 #include "CL/cl_ext_qcom.h"
 #ifdef ANDROID_9
 #include "selfdrive/camerad/cameras/camera_android.h"
+#include "CL/cl_ext_qcom.h"
 #else
 #include "selfdrive/camerad/cameras/camera_qcom.h"
 #endif
