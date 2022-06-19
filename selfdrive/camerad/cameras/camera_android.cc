@@ -6,6 +6,7 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/opencv.hpp>
 #include <opencv2/videoio.hpp>
+#include <opencv2/core/hal/interface.h>
 #pragma clang diagnostic pop
 
 #include <binder/ProcessState.h>
@@ -19,6 +20,8 @@
 // id of the video capturing device
 const int ROAD_CAMERA_INDEX = util::getenv("ROADCAM_ID", 0);
 const int DRIVER_CAMERA_INDEX = util::getenv("DRIVERCAM_ID", 1);
+
+//TODO: get supported resolution from param
 
 #define FRAME_WIDTH  1920
 #define FRAME_HEIGHT 1080
@@ -111,19 +114,41 @@ void CameraState::camera_run() {
   double time = nanos_since_boot() * 1e-9;
   int frame_count = 0;
 
-  cv::VideoWriter video("cv_outvid.mp4", cv::VideoWriter::fourcc('M','P','4','V'), 20, Size(FRAME_WIDTH,FRAME_HEIGHT));
+  // write camera out to video (testing)
+  cv::VideoWriter video("cv_outvid.mp4", cv::VideoWriter::fourcc('h','2','6','4'), 20, Size(FRAME_WIDTH,FRAME_HEIGHT));
 
   while (!do_exit) {
-    cv::Mat frame_mat;
     AImage *image = image_reader->GetLatestImage();
     if (!image) {
       util::sleep_for(1);
       continue;
     }
-
+    //cv::Mat frame_mat(cv::Size(FRAME_HEIGHT, FRAME_WIDTH), CV_8UC3, image);
+    
     // TODO: convert NDK capture into a CV Mat and handle the warp
     //image >> frame_mat;
-    //video.write(frame_mat);
+
+    uint8_t *dataY = nullptr;
+    uint8_t *dataU = nullptr;
+    uint8_t *dataV = nullptr;
+
+    int lenY = 0;
+    int lenU = 0;
+    int lenV = 0;
+
+    AImage_getPlaneData(image, 0, (uint8_t**)&dataY, &lenY);
+    AImage_getPlaneData(image, 1, (uint8_t**)&dataU, &lenU);
+    AImage_getPlaneData(image, 2, (uint8_t**)&dataV, &lenV);
+
+    char buff[lenY+lenU+lenV];
+
+    memcpy(buff+0,dataY,lenY);
+    memcpy(buff+lenY,dataV,lenV);
+    memcpy(buff+lenY+lenV,dataU,lenU);
+
+    cv::Mat yuvMat(FRAME_HEIGHT + FRAME_HEIGHT/2, FRAME_WIDTH, CV_8UC1, &buff);
+
+    video.write(yuvMat);
 
     frame_count++;
     if (frame_count % 100 == 0) {
@@ -148,6 +173,10 @@ void CameraState::camera_run() {
       .timestamp_eof = nanos_since_boot(),
     };
 
+    // send yuvMat
+    //int transformed_size = yuvMat.total() * yuvMat.elemSize();
+    //CL_CHECK(clEnqueueWriteBuffer(buf.copy_q, buf.buf_cl, CL_TRUE, 0, transformed_size, yuvMat.data, 0, NULL, NULL));
+
     buf.send_yuv(image, frame_id, frame_data);
 
     MessageBuilder msg;
@@ -171,6 +200,9 @@ void CameraState::camera_run() {
 
     ++frame_id;
   }
+
+  //release video writer
+  video.release();
 
   native_camera->start_preview(false);
 }
