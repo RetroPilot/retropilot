@@ -33,8 +33,8 @@ namespace tici_dm_crop {
 };
 
 const mat3 fcam_intrinsic_matrix =
-    Hardware::EON() ? (mat3){{910., 0., 1164.0 / 2,
-                              0., 910., 874.0 / 2,
+    Hardware::EON() ? (mat3){{910., 0., 1920.0 / 2,
+                              0., 910., 1080.0 / 2,
                               0., 0., 1.}}
                     : (mat3){{2648.0, 0.0, 1928.0 / 2,
                               0.0, 2648.0, 1208.0 / 2,

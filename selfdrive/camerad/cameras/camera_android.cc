@@ -1,15 +1,5 @@
 #include "selfdrive/camerad/cameras/camera_android.h"
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wundefined-inline"
-#include <opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/opencv.hpp>
-#include <opencv2/videoio.hpp>
-#include <opencv2/core/hal/interface.h>
-#include <opencv2/imgcodecs/imgcodecs.hpp>
-#pragma clang diagnostic pop
-
 #include <binder/ProcessState.h>
 #include <camera/NdkCameraError.h>
 
@@ -32,7 +22,7 @@ const int DRIVER_CAMERA_INDEX = util::getenv("DRIVERCAM_ID", 1);
 #define ROAD 1
 //#define DRIVER 1
 
-using namespace cv;
+//using namespace cv;
 
 extern ExitHandler do_exit;
 
@@ -115,59 +105,13 @@ void CameraState::camera_run(CameraState *s) {
   double time = nanos_since_boot() * 1e-9;
   int frame_count = 0;
 
-  // write camera out to video (testing)
-  //cv::VideoWriter video("cv_outvid.mp4", cv::VideoWriter::fourcc('h','2','6','4'), 20, Size(FRAME_WIDTH,FRAME_HEIGHT));
-  //size_t buf_idx = 0;
-
-  bool snap_taken = 0;
-
   while (!do_exit) {
     AImage *image = image_reader->GetLatestImage();
     if (!image) {
       util::sleep_for(1);
       continue;
     }
-    //cv::Mat frame_mat(cv::Size(FRAME_HEIGHT, FRAME_WIDTH), CV_8UC3, image);
     
-    // convert NDK capture into a CV Mat
-    //image >> frame_mat;
-
-    uint8_t *dataY = nullptr;
-    uint8_t *dataU = nullptr;
-    uint8_t *dataV = nullptr;
-
-    int lenY = 0;
-    int lenU = 0;
-    int lenV = 0;
-
-    AImage_getPlaneData(image, 0, (uint8_t**)&dataY, &lenY);
-    AImage_getPlaneData(image, 1, (uint8_t**)&dataU, &lenU);
-    AImage_getPlaneData(image, 2, (uint8_t**)&dataV, &lenV);
-
-    uchar buff[lenY+lenU+lenV];
-
-    memcpy(buff+0,dataY,lenY);
-    memcpy(buff+lenY,dataV,lenV);
-    memcpy(buff+lenY+lenV,dataU,lenU);
-
-    cv::Mat yuvMat(FRAME_HEIGHT, FRAME_WIDTH, CV_8UC1, &buff);
-
-    // cv transform and capture
-    cv::Mat transformed_mat;
-    float ts[9] = {1.50330396, 0.0, -59.40969163,
-                  0.0, 1.50330396, 76.20704846,
-                  0.0, 0.0, 1.0};
-    const cv::Mat transform = cv::Mat(3, 3, CV_32F, ts);
-    cv::Size size(FRAME_WIDTH, FRAME_HEIGHT);
-    cv::warpPerspective(yuvMat, transformed_mat, transform, size, cv::INTER_LINEAR, cv::BORDER_CONSTANT, 0);
-
-    if ((frame_count % 100 == 0) && !snap_taken ){
-      imwrite("/sdcard/Download/cv_out.png", yuvMat);
-      snap_taken = 1;
-    }
-
-    // video.write(yuvMat);
-
     frame_count++;
     if (frame_count % 100 == 0) {
       LOGD("camera_run: fps %.2f", 100.0 / (nanos_since_boot() * 1e-9 - time));
@@ -190,13 +134,6 @@ void CameraState::camera_run(CameraState *s) {
       .frame_id = frame_id,
       .timestamp_eof = nanos_since_boot(),
     };
-
-    // send yuvMat
-    // s->buf.camera_bufs_metadata[buf_idx] = {.frame_id = frame_id};
-    // auto &buf2 = s->buf.camera_bufs[buf_idx];
-    // int transformed_size = yuvMat.total() * yuvMat.elemSize();
-    // CL_CHECK(clEnqueueWriteBuffer(buf2.copy_q, buf2.buf_cl, CL_TRUE, 0, transformed_size, yuvMat.data, 0, NULL, NULL));
-    // s->buf.queue(buf_idx);
 
     buf.send_yuv(image, frame_id, frame_data);
 
@@ -221,9 +158,6 @@ void CameraState::camera_run(CameraState *s) {
 
     ++frame_id;
   }
-
-  //release video writer
-  //video.release();
 
   native_camera->start_preview(false);
 }
