@@ -436,7 +436,7 @@ SConscript(['rednose/SConscript'])
 # Build openpilot
 
 SConscript(['cereal/SConscript'])
-#SConscript(['panda/board/SConscript'])
+SConscript(['panda/board/SConscript'])
 SConscript(['opendbc/can/SConscript'])
 
 SConscript(['third_party/SConscript'])

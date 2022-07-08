@@ -75,9 +75,10 @@ Panda::Panda(std::string serial, uint32_t bus_offset) : bus_offset(bus_offset) {
   if (err != 0) { goto fail; }
 
   hw_type = get_hw_type();
-
-  assert((hw_type != cereal::PandaState::PandaType::WHITE_PANDA) &&
-         (hw_type != cereal::PandaState::PandaType::GREY_PANDA));
+  
+  // fuck this lockout
+  // assert((hw_type != cereal::PandaState::PandaType::WHITE_PANDA) &&
+  //        (hw_type != cereal::PandaState::PandaType::GREY_PANDA));
 
   has_rtc = (hw_type == cereal::PandaState::PandaType::UNO) ||
             (hw_type == cereal::PandaState::PandaType::DOS);
