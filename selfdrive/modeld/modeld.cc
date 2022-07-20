@@ -164,7 +164,7 @@ int main(int argc, char **argv) {
     int ret;
     ret = util::set_realtime_priority(54);
     assert(ret == 0);
-    util::set_core_affinity({Hardware::EON() ? 2 : 7});
+    util::set_core_affinity(7); // util::set_core_affinity({Hardware::EON() ? 2 : 7});
     assert(ret == 0);
   }
 
