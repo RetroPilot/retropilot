@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
     err = util::set_realtime_priority(54);
     assert(err == 0);
     err = util::set_core_affinity({4}); //set_realtime_priority({Hardware::TICI() ? 4 : 3})
-    assert(err == 0);
+    //assert(err == 0);
   }
 
   std::vector<std::string> serials(argv + 1, argv + argc);

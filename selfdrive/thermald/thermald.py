@@ -61,6 +61,7 @@ def populate_tz_by_type():
       tz_by_type[f.read().strip()] = int(n.lstrip("thermal_zone"))
 
 def read_tz(x):
+  return 30
   if x is None:
     return 0
 
@@ -211,7 +212,7 @@ def thermald_thread(end_event, hw_queue):
         elif is_uno or PC:
           fan_controller = UnoFanController()
         else:
-          fan_controller = EonFanController()
+          fan_controller = UnoFanController()
 
     try:
       last_hw_state = hw_queue.get_nowait()
