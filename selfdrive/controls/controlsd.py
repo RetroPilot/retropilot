@@ -34,10 +34,11 @@ LANE_DEPARTURE_THRESHOLD = 0.1
 
 REPLAY = "REPLAY" in os.environ
 SIMULATION = "SIMULATION" in os.environ
-NOSENSOR = "NOSENSOR" in os.environ
+NOSENSOR = True #"NOSENSOR" in os.environ
 IGNORE_PROCESSES = {"rtshield", "uploader", "deleter", "loggerd", "logmessaged", "tombstoned",
                     "logcatd", "proclogd", "clocksd", "updated", "timezoned", "manage_athenad",
-                    "statsd", "shutdownd"} | \
+                    "statsd", "shutdownd",
+                    "dmonitoringmodeld"} | \
                     {k for k, v in managed_processes.items() if not v.enabled}
 
 ACTUATOR_FIELDS = set(car.CarControl.Actuators.schema.fields.keys())
@@ -57,7 +58,7 @@ CSID_MAP = {"0": EventName.roadCameraError, "1": EventName.wideRoadCameraError, 
 
 class Controls:
   def __init__(self, sm=None, pm=None, can_sock=None):
-    config_realtime_process(4 if TICI else 3, Priority.CTRL_HIGH)
+    config_realtime_process(4, Priority.CTRL_HIGH) # 4 if TICI else 3
 
     # Setup sockets
     self.pm = pm
@@ -270,9 +271,11 @@ class Controls:
       self.events.add(EventName.usbError)
     elif not self.sm.all_alive_and_valid() or self.can_rcv_error:
       self.events.add(EventName.commIssue)
+      invalid = [s for s, valid in self.sm.valid.items() if not valid]
+      not_alive = [s for s, alive in self.sm.alive.items() if not alive]
+      print("\nNOT ALIVE: ", not_alive)
+      print("\nNOT VALID: ", invalid)
       if not self.logged_comm_issue:
-        invalid = [s for s, valid in self.sm.valid.items() if not valid]
-        not_alive = [s for s, alive in self.sm.alive.items() if not alive]
         cloudlog.event("commIssue", invalid=invalid, not_alive=not_alive, can_error=self.can_rcv_error, error=True)
         self.logged_comm_issue = True
     else:
@@ -322,8 +325,9 @@ class Controls:
         if not self.sm['liveLocationKalman'].gpsOK and (self.distance_traveled > 1000):
           # Not show in first 1 km to allow for driving out of garage. This event shows after 5 minutes
           self.events.add(EventName.noGps)
-      if not self.sm.all_alive(self.camera_packets):
-        self.events.add(EventName.cameraMalfunction)
+      # TODO: fix this for RetrOS
+      # if not self.sm.all_alive(self.camera_packets):
+      #   self.events.add(EventName.cameraMalfunction)
       if self.sm['modelV2'].frameDropPerc > 20:
         self.events.add(EventName.modeldLagging)
       if self.sm['liveLocationKalman'].excessiveResets:
