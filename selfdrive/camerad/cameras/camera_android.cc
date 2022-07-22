@@ -15,7 +15,7 @@ const int DRIVER_CAMERA_INDEX = util::getenv("DRIVERCAM_ID", 1);
 //TODO: get supported resolution from param
 
 #define FRAME_WIDTH  1920
-#define FRAME_HEIGHT 1080
+#define FRAME_HEIGHT 1440
 #define FRAME_WIDTH_FRONT  1920
 #define FRAME_HEIGHT_FRONT 1080
 

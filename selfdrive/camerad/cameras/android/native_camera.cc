@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <string>
+#include <cmath>
 
 #include "selfdrive/camerad/cameras/android/display_dimension.h"
 
@@ -64,7 +65,7 @@ void NativeCamera::match_capture_size_request(ImageFormat *view, int32_t width, 
   // format of the data: format, width, height, input?, type int32
 
   bool foundIt = false;
-  DisplayDimension foundRes(1920, 1080);
+  DisplayDimension foundRes(width, height);
 
   for (int i = 0; i < entry.count; i++) {
     int32_t input = entry.data.i32[i * 4 + 3];
@@ -75,9 +76,12 @@ void NativeCamera::match_capture_size_request(ImageFormat *view, int32_t width, 
     DisplayDimension res(entry.data.i32[i * 4 + 1],
                          entry.data.i32[i * 4 + 2]);
 
-#if false
+#if true
     if (format) {
-      LOGD("found format 0x%X, w: %d, h: %d", format, res.width(), res.height());
+      double ratio = (double)res.width() / (double)res.height();
+      if (std::isgreater(ratio, 1.0) && isless(ratio, 1.6) && format == 0x23){
+        LOGD("found format 0x%X, w: %d, h: %d, ratio: %f", format, res.width(), res.height(), ratio);
+      }
     }
 #endif
 

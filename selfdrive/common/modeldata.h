@@ -32,9 +32,10 @@ namespace tici_dm_crop {
   const int width = 954;
 };
 
+// TODO: use params collected from camerad here
 const mat3 fcam_intrinsic_matrix =
     Hardware::EON() ? (mat3){{1185.5, 0., 1920.0 / 2,
-                              0., 1185.5, 1080.0 / 2,
+                              0., 1185.5, 1440 / 2,
                               0., 0., 1.}}
                     : (mat3){{2648.0, 0.0, 1928.0 / 2,
                               0.0, 2648.0, 1208.0 / 2,
