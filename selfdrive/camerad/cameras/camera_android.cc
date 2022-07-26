@@ -14,8 +14,8 @@ const int DRIVER_CAMERA_INDEX = util::getenv("DRIVERCAM_ID", 1);
 
 //TODO: get supported resolution from param
 
-#define FRAME_WIDTH  1920
-#define FRAME_HEIGHT 1440
+#define FRAME_WIDTH 1280
+#define FRAME_HEIGHT 960
 #define FRAME_WIDTH_FRONT  1920
 #define FRAME_HEIGHT_FRONT 1080
 
@@ -107,6 +107,8 @@ void CameraState::camera_run(CameraState *s) {
 
   while (!do_exit) {
     AImage *image = image_reader->GetLatestImage();
+    // this is cursed
+    util::sleep_for(39);
     if (!image) {
       util::sleep_for(1);
       continue;
@@ -115,19 +117,22 @@ void CameraState::camera_run(CameraState *s) {
     frame_count++;
     if (frame_count % 100 == 0) {
       LOGD("camera_run: fps %.2f", 100.0 / (nanos_since_boot() * 1e-9 - time));
+      double frameTime = nanos_since_boot() * 1e-9 - time;
+      LOGD("\nframeTime = %.2f", frameTime);
       time = nanos_since_boot() * 1e-9;
       frame_count = 0;
     }
 
     // ** debug **
-    media_status_t status;
+    //media_status_t status;
 
-    int32_t planeCount;
-    int32_t format;
-    status = AImage_getNumberOfPlanes(image, &planeCount);
-    assert(status == AMEDIA_OK && planeCount == 3);
-    status = AImage_getFormat(image, &format);
-    assert(status == AMEDIA_OK && format == AIMAGE_FORMAT_YUV_420_888);
+    //int32_t planeCount;
+    //int32_t format;
+    //status = AImage_getNumberOfPlanes(image, &planeCount);
+    //assert(status == AMEDIA_OK && planeCount == 3);
+    //status = AImage_getFormat(image, &format);
+    //assert(status == AMEDIA_OK && format == AIMAGE_FORMAT_YUV_420_888);
+    
 
     // ** send frame **
     FrameMetadata frame_data = {

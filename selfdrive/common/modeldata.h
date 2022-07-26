@@ -33,9 +33,15 @@ namespace tici_dm_crop {
 };
 
 // TODO: use params collected from camerad here
+// focal dist = hres/(2*tan(hFoV/2/180*pi))
+
+#define focal_dist 985.5
+#define hres 1280.0
+#define vres 960
+
 const mat3 fcam_intrinsic_matrix =
-    Hardware::EON() ? (mat3){{1185.5, 0., 1920.0 / 2,
-                              0., 1185.5, 1440 / 2,
+    Hardware::EON() ? (mat3){{focal_dist, 0., hres / 2,
+                              0., focal_dist, vres / 2,
                               0., 0., 1.}}
                     : (mat3){{2648.0, 0.0, 1928.0 / 2,
                               0.0, 2648.0, 1208.0 / 2,
