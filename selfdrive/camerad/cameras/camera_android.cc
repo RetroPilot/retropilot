@@ -107,6 +107,8 @@ void CameraState::camera_run(CameraState *s) {
 
   while (!do_exit) {
     AImage *image = image_reader->GetLatestImage();
+    // TODO: get from NDK
+    frame_time = nanos_since_boot();
     // this is cursed
     util::sleep_for(39);
     if (!image) {
@@ -137,7 +139,7 @@ void CameraState::camera_run(CameraState *s) {
     // ** send frame **
     FrameMetadata frame_data = {
       .frame_id = frame_id,
-      .timestamp_eof = nanos_since_boot(),
+      .timestamp_eof = frame_time,
     };
 
     buf.send_yuv(image, frame_id, frame_data);

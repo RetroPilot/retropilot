@@ -15,6 +15,18 @@
 #include <map>
 #include <set>
 
+#ifdef ANDROID_9
+ #include <cutils/properties.h>
+ #include <dlfcn.h>
+ #include <string.h>
+ #include <pthread.h>
+ #include <errno.h>
+ #include <limits.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <unistd.h>
+#endif
+
 #include "cereal/messaging/messaging.h"
 #include "selfdrive/common/swaglog.h"
 #include "selfdrive/common/timing.h"
@@ -36,6 +48,74 @@ volatile sig_atomic_t re_init_sensors = 0;
 
 namespace {
 
+
+//TODO: actually get data from sensors and send it to the message bus
+#ifdef ANDROID_9
+
+static int load(const char *id,
+        const char *path,
+        const struct hw_module_t **pHmi)
+{
+    int status = -EINVAL;
+    void *handle = NULL;
+    struct hw_module_t *hmi = NULL;
+
+    const char *sym = HAL_MODULE_INFO_SYM_AS_STR;
+
+    handle = dlopen(path, RTLD_NOW);
+    if (handle == NULL) {
+        char const *err_str = dlerror();
+        printf("load: module=%s\n%s\n", path, err_str?err_str:"unknown");
+        status = -EINVAL;
+        goto done;
+    }
+
+    /* Get the address of the struct hal_module_info. */
+    hmi = (struct hw_module_t *)dlsym(handle, sym);
+    if (hmi == NULL) {
+        printf("load: couldn't find symbol %s\n", sym);
+        status = -EINVAL;
+        goto done;
+    }
+
+    /* Check that the id matches */
+    if (strcmp(id, hmi->id) != 0) {
+        printf("load: id=%s != hmi->id=%s\n", id, hmi->id);
+        status = -EINVAL;
+        goto done;
+    }
+
+    hmi->dso = handle;
+
+    /* success */
+    status = 0;
+
+  done:
+    if (status != 0) {
+        hmi = NULL;
+        if (handle != NULL) {
+            dlclose(handle);
+            handle = NULL;
+        }
+    } else {
+        printf("loaded HAL id=%s path=%s hmi=%p handle=%p\n",
+                id, path, hmi, handle);
+    }
+
+    *pHmi = hmi;
+
+    return status;
+}
+
+int hw_get_module_by_class_x(const char *class_id, const char *inst,
+                           const struct hw_module_t **module)
+{
+  const char *path = "/vendor/lib64/sensors.ssc.so";
+  return load(class_id, path, module);
+}
+
+#endif
+
 void sigpipe_handler(int sig) {
   LOGE("SIGPIPE received");
   re_init_sensors = true;
@@ -54,7 +134,12 @@ void sensor_loop() {
     struct sensors_poll_device_t* device;
     struct sensors_module_t* module;
 
+#ifdef ANDROID_9
+    int ret = hw_get_module_by_class_x(SENSORS_HARDWARE_MODULE_ID, NULL, (hw_module_t const**)&module);
+    printf("hw_get_module Return Code: %d\n",ret);
+#else
     hw_get_module(SENSORS_HARDWARE_MODULE_ID, (hw_module_t const**)&module);
+#endif
     sensors_open(&module->common, &device);
 
     // required

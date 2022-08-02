@@ -34,6 +34,7 @@ private:
   ImageFormat view{0, 0};
   NativeCamera *native_camera;
   ImageReader *image_reader;
+  uint64_t frame_time;
 
 public:
   void camera_init(MultiCameraState *multi_cam_state_, VisionIpcServer *v, int camera_index, int camera_id_, unsigned int fps, cl_device_id device_id, cl_context ctx, VisionStreamType rgb_type, VisionStreamType yuv_type);
@@ -41,7 +42,6 @@ public:
   void camera_run(CameraState *s);
   void camera_close();
 };
-
 
 typedef struct MultiCameraState {
   CameraState road_cam;
