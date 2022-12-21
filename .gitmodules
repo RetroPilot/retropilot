@@ -19,3 +19,6 @@
 [submodule "tinygrad"]
   path = tinygrad_repo
   url = https://github.com/geohot/tinygrad.git
+[submodule "third_party/android_headers_9"]
+	path = third_party/android_headers_9
+	url = https://github.com/incognitojam/android_headers_9.git
