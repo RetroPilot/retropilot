@@ -28,7 +28,8 @@ RawLogger::RawLogger(const char* filename, int width, int height, int fps,
 
   // TODO: respect write arg
 
-  av_register_all();
+  // av_register_all(); // deprecated, not needed in modern FFmpeg
+
   codec = avcodec_find_encoder(AV_CODEC_ID_FFVHUFF);
   // codec = avcodec_find_encoder(AV_CODEC_ID_FFV1);
   assert(codec);
@@ -65,8 +66,8 @@ RawLogger::RawLogger(const char* filename, int width, int height, int fps,
 
 RawLogger::~RawLogger() {
   av_frame_free(&frame);
-  avcodec_close(codec_ctx);
-  av_free(codec_ctx);
+  // avcodec_close(codec_ctx); // deprecated
+  avcodec_free_context(&codec_ctx);
 }
 
 void RawLogger::encoder_open(const char* path) {
@@ -111,7 +112,7 @@ void RawLogger::encoder_close() {
   int err = av_write_trailer(format_ctx);
   assert(err == 0);
 
-  avcodec_close(stream->codec);
+  // avcodec_close(stream->codec); // deprecated, no longer valid
 
   err = avio_closep(&format_ctx->pb);
   assert(err == 0);
@@ -155,12 +156,20 @@ int RawLogger::encode_frame(const uint8_t *y_ptr, const uint8_t *u_ptr, const ui
 
   int ret = counter;
 
-  int got_output = 0;
-  int err = avcodec_encode_video2(codec_ctx, &pkt, frame, &got_output);
-  if (err) {
-    LOGE("encoding error\n");
+  int err = avcodec_send_frame(codec_ctx, frame);
+  if (err < 0) {
+    LOGE("encoding error: avcodec_send_frame failed\n");
+    return -1;
+  }
+
+  err = avcodec_receive_packet(codec_ctx, &pkt);
+  if (err == AVERROR(EAGAIN) || err == AVERROR_EOF) {
+    // no packet yet
     ret = -1;
-  } else if (got_output) {
+  } else if (err < 0) {
+    LOGE("encoding error: avcodec_receive_packet failed\n");
+    ret = -1;
+  } else {
     av_packet_rescale_ts(&pkt, codec_ctx->time_base, stream->time_base);
     pkt.stream_index = 0;
 
@@ -171,8 +180,8 @@ int RawLogger::encode_frame(const uint8_t *y_ptr, const uint8_t *u_ptr, const ui
     } else {
       counter++;
     }
+    av_packet_unref(&pkt);
   }
 
-  av_packet_unref(&pkt);
   return ret;
 }

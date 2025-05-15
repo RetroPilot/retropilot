@@ -15,6 +15,10 @@
 #include "cereal/gen/cpp/log.capnp.h"
 #include "panda/board/health.h"
 
+#include <string>
+#include <vector>
+#include <optional>
+
 #define TIMEOUT 0
 #define PANDA_BUS_CNT 4
 #define RECV_SIZE (0x4000U)

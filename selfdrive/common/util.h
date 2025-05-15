@@ -16,6 +16,8 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <cstdarg>
+
 
 // keep trying if x gets interrupted by a signal
 #define HANDLE_EINTR(x)                                        \
