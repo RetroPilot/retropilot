@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os
+# import os
 import argparse
 from inputs import get_gamepad
 
@@ -71,17 +71,16 @@ def joystick_thread(use_keyboard):
       joystick_sock.send(dat.to_bytes())
       print('\n' + ', '.join(f'{name}: {round(v, 3)}' for name, v in joystick.axes_values.items()))
 
-
-if __name__ == '__main__':
+def main():
   parser = argparse.ArgumentParser(description='Publishes events from your joystick to control your car.\n' +
                                                'openpilot must be offroad before starting joysticked.',
                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
   parser.add_argument('--keyboard', action='store_true', help='Use your keyboard instead of a joystick')
   args = parser.parse_args()
 
-  if not Params().get_bool("IsOffroad") and "ZMQ" not in os.environ:
-    print("The car must be off before running joystickd.")
-    exit()
+  # if not Params().get_bool("IsOffroad") and "ZMQ" not in os.environ:
+  #   print("The car must be off before running joystickd.")
+  #   exit()
 
   print()
   if args.keyboard:
@@ -94,3 +93,6 @@ if __name__ == '__main__':
     print('Using joystick, make sure to run cereal/messaging/bridge on your device if running over the network!')
 
   joystick_thread(args.keyboard)
+
+if __name__ == '__main__':
+  main()

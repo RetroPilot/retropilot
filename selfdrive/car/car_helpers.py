@@ -81,8 +81,11 @@ interfaces = load_interfaces(interface_names)
 
 # **** for use live only ****
 def fingerprint(logcan, sendcan):
-  fixed_fingerprint = os.environ.get('FINGERPRINT', "")
-  skip_fw_query = os.environ.get('SKIP_FW_QUERY', False)
+  # fixed_fingerprint = os.environ.get('FINGERPRINT', "")
+  # skip_fw_query = os.environ.get('SKIP_FW_QUERY', False)
+  fixed_fingerprint = "RETROPILOT RETROFIT"
+  # fixed_fingerprint = Params().get("CarFingerprint", "")
+  skip_fw_query = True
 
   if not fixed_fingerprint and not skip_fw_query:
     # Vin query only reliably works thorugh OBDII
