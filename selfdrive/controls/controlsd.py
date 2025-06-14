@@ -154,6 +154,8 @@ class Controls:
     self.button_timers = {ButtonEvent.Type.decelCruise: 0, ButtonEvent.Type.accelCruise: 0}
     self.last_actuators = car.CarControl.Actuators.new_message()
 
+    self.btn_last = 0
+
     # TODO: no longer necessary, aside from process replay
     self.sm['liveParameters'].valid = True
 
@@ -259,6 +261,7 @@ class Controls:
 
       if safety_mismatch or self.mismatch_counter >= 200:
         self.events.add(EventName.controlsMismatch)
+        print("CONTROLS MISMATCH: ", self.mismatch_counter)
 
       if log.PandaState.FaultType.relayMalfunction in pandaState.faults:
         self.events.add(EventName.relayMalfunction)
@@ -268,13 +271,13 @@ class Controls:
       self.events.add(EventName.radarFault)
     elif not self.sm.valid["pandaStates"]:
       self.events.add(EventName.usbError)
-    elif not self.sm.all_alive_and_valid() or self.can_rcv_error:
-      self.events.add(EventName.commIssue)
-      if not self.logged_comm_issue:
-        invalid = [s for s, valid in self.sm.valid.items() if not valid]
-        not_alive = [s for s, alive in self.sm.alive.items() if not alive]
-        cloudlog.event("commIssue", invalid=invalid, not_alive=not_alive, can_error=self.can_rcv_error, error=True)
-        self.logged_comm_issue = True
+    # elif not self.sm.all_alive_and_valid() or self.can_rcv_error:
+    #   self.events.add(EventName.commIssue)
+    #   if not self.logged_comm_issue:
+    #     invalid = [s for s, valid in self.sm.valid.items() if not valid]
+    #     not_alive = [s for s, alive in self.sm.alive.items() if not alive]
+    #     cloudlog.event("commIssue", invalid=invalid, not_alive=not_alive, can_error=self.can_rcv_error, error=True)
+    #     self.logged_comm_issue = True
     else:
       self.logged_comm_issue = False
 
@@ -296,6 +299,7 @@ class Controls:
       self.cruise_mismatch_counter = self.cruise_mismatch_counter + 1 if cruise_mismatch else 0
       if self.cruise_mismatch_counter > int(3. / DT_CTRL):
         self.events.add(EventName.cruiseMismatch)
+        print("CRUISE MISMATCH")
 
     # Check for FCW
     stock_long_is_braking = self.enabled and not self.CP.openpilotLongitudinalControl and CS.aEgo < -1.5
@@ -458,7 +462,7 @@ class Controls:
           self.v_cruise_kph = initialize_v_cruise(CS.vEgo, CS.buttonEvents, self.v_cruise_kph_last)
 
     # Check if actuators are enabled
-    self.active = self.state == State.enabled or self.state == State.softDisabling
+    # self.active = self.state == State.enabled or self.state == State.softDisabling
     if self.active:
       self.current_alert_types.append(ET.WARNING)
 
@@ -564,8 +568,18 @@ class Controls:
       CC.pitch = orientation_value[1]
 
     CC.cruiseControl.cancel = CS.cruiseState.enabled and (not self.enabled or not self.CP.pcmCruise)
-    if self.joystick_mode and self.sm.rcv_frame['testJoystick'] > 0 and self.sm['testJoystick'].buttons[0]:
-      CC.cruiseControl.cancel = True
+
+    button_pressed = self.joystick_mode and self.sm.rcv_frame['testJoystick'] > 0 and self.sm['testJoystick'].buttons[0]
+    if self.joystick_mode:
+      CC.bodycontrol.relayCoreCMD = (self.sm['testJoystick'].buttons[4] << 0) | (self.sm['testJoystick'].buttons[3] << 1)
+      CC.bodycontrol.relayCoreCMD |= (self.sm['testJoystick'].buttons[2] << 2) | (self.sm['testJoystick'].buttons[1] << 3)
+    if button_pressed and not self.btn_last:
+      self.enabled = not self.enabled
+      self.active = not self.active
+      CC.cruiseControl.cancel = not self.enabled
+      # print(self.sm['testJoystick'].buttons)
+    
+    self.btn_last = button_pressed
 
     hudControl = CC.hudControl
     hudControl.setSpeed = float(self.v_cruise_kph * CV.KPH_TO_MS)

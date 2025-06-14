@@ -4,6 +4,7 @@ from selfdrive.config import Conversions as CV
 from selfdrive.car.toyota.tunes import LatTunes, LongTunes, set_long_tune, set_lat_tune
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
 from selfdrive.car.interfaces import CarInterfaceBase
+from selfdrive.car.retropilot.values import DetectedEcus
 
 EventName = car.CarEvent.EventName
 
@@ -31,7 +32,22 @@ class CarInterface(CarInterfaceBase):
     ret.stoppingControl = True
 
     ret.openpilotLongitudinalControl = True
-    ret.enableGasInterceptor = 0x201 in fingerprint[0]
+
+    ECU_FP = {
+      "GasInterceptor": 0x201,
+      "GasActuator": 0x401,
+      "SteerInterceptor": 0x301,
+      "SteerActuator": 0x12F,
+      "SteerActuatorSSC": 0x22F,
+      "iBooster": 0x20F,
+      "RelayCore": 0x601,
+    }
+
+    for ecu, addr in ECU_FP.items():
+      if addr in fingerprint[0]:
+        DetectedEcus[ecu] = True
+
+    ret.enableGasInterceptor = DetectedEcus["GasInterceptor"]
 
     # tuning
 
@@ -86,7 +102,7 @@ class CarInterface(CarInterfaceBase):
 
     # simple!
     ret = self.CC.update(c.enabled, c.active, self.CS, self.frame,
-                               c.actuators)
+                               c.actuators, c.bodycontrol)
 
     self.frame += 1
     return ret

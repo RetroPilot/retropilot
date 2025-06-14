@@ -56,7 +56,7 @@ def create_iBooster_cmd(packer, enabled, brake, raw_cnt):
     "BRAKE_MODE": enabled * 2.,
     "COUNTER" : raw_cnt,
   }
-  return packer.make_can_msg("OCELOT_BRAKE_COMMAND", 0, values)
+  return packer.make_can_msg("IBOOSTER_BRAKE_COMMAND", 0, values)
 
 def create_relay_command(packer, enabled, relay, idx):
   values = {

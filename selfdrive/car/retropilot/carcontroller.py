@@ -5,8 +5,13 @@ from selfdrive.car.retropilot.ocelotcan import create_gas_interceptor_command, c
                                            create_steer_interceptor_command, create_iBooster_cmd, create_relay_command
 from selfdrive.car.retropilot.values import SteerLimitParams
 from opendbc.can.packer import CANPacker
+from selfdrive.car.retropilot.values import DetectedEcus
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
+
+def compute_gas_brake(accel):
+  gb = float(accel) / 4.8
+  return clip(gb, 0.0, 1.0), clip(-gb, 0.0, 1.0)
 
 class CarController():
   def __init__(self, dbc_name, CP, VM):
@@ -15,11 +20,15 @@ class CarController():
 
     self.alert_active = False
 
+    self.accel = 0
+    self.speed = 0
+    self.gas = 0
+    self.brake = 0
+
     self.packer = CANPacker(dbc_name)
 
-  def update(self, enabled, active, CS, frame, actuators):
+  def update(self, enabled, active, CS, frame, actuators, relays):
     can_sends = []
-    enabled = 1
     # *** compute control surfaces ***
     # if not enabled, everything should be 0
     if not enabled:
@@ -30,18 +39,19 @@ class CarController():
     else:
       apply_steer_req = 1
 
-    # gas and brake
-    apply_gas = clip(actuators.gas, 0., 1.)
-    apply_brake = clip(actuators.brake, 0., 1.)
-    # if (frame % 2 == 0):
-      # detect whether to use gas interceptor or actuator
-      # if CS.CP.enableGasInterceptor:
-      #   can_sends.append(create_gas_interceptor_command(self.packer, apply_gas, frame//2))
-      # if CS.CP.enableGasActuator:
-      #   can_sends.append(create_gas_actuator_command(self.packer, apply_gas, frame//2))
-      # if CS.CP.enableiBooster:
-      #   can_sends.append(create_iBooster_cmd(self.packer, enabled, apply_brake, frame//2))
-      # can_sends.append(create_iBooster_cmd(self.packer, enabled, apply_brake, frame//2))
+    if active:
+      apply_brake = 0.0
+      apply_gas = clip(actuators.accel, 0.0, 0.5)
+      if actuators.accel < 0:
+        apply_brake = clip(-actuators.accel, 0.0, 1.0)
+    else:
+      apply_gas = 0.0
+      apply_brake = 0.0
+
+    # print("enabled: ", enabled, "active: ", active, "actuators: ", apply_gas, apply_brake, actuators.steer)
+    # for ecu, present in DetectedEcus.items():
+    #   if present:
+    #     print(f"Detected ECU: {ecu}")
 
     # steer torque
     new_steer = int(round(actuators.steer * SteerLimitParams.STEER_MAX))
@@ -50,23 +60,38 @@ class CarController():
 
     self.last_steer = apply_steer
 
-    # send steering command. currently only support interceptor
-    # if CS.CP.enableSteerInterceptor:
-    can_sends.append(create_steer_interceptor_command(self.packer, apply_steer, apply_steer_req, frame))
-    can_sends.append(create_gas_actuator_command(self.packer, enabled, apply_gas, frame))
-    can_sends.append(create_gas_interceptor_command(self.packer, apply_gas, frame))
-    can_sends.append(create_iBooster_cmd(self.packer, enabled, apply_brake, frame))
-    can_sends.append(create_relay_command(self.packer, enabled, 3, frame))
-
+    # 50Hz Messages
+    if (frame % 2 == 0):
+      if DetectedEcus["GasInterceptor"]:
+        can_sends.append(create_gas_interceptor_command(self.packer, apply_gas, frame//2))
+      if DetectedEcus["GasActuator"]:
+        can_sends.append(create_gas_actuator_command(self.packer, enabled, apply_gas, frame//2))
+      if DetectedEcus["SteerActuator"]:
+        can_sends.append(create_steer_interceptor_command(self.packer, apply_steer, apply_steer_req, frame//2))
+      if DetectedEcus["RelayCore"]:
+        can_sends.append(create_relay_command(self.packer, enabled, relays.relayCoreCMD, frame//2))
+    
+    # 100Hz Messages
+    if DetectedEcus["iBooster"]:
+      can_sends.append(create_iBooster_cmd(self.packer, enabled, apply_brake, frame))
+    if DetectedEcus["SteerInterceptor"]:
+      can_sends.append(create_steer_interceptor_command(self.packer, apply_steer, apply_steer_req, frame))
+      
     # #*** static msgs ***
     # TODO: add static messages here. stuff like radar if detected, etc
     # for (addr, ecu, cars, bus, fr_step, vl) in STATIC_MSGS:
     #   if frame % fr_step == 0 and ecu in self.fake_ecus and CS.CP.carFingerprint in cars:
     #     can_sends.append(make_can_msg(addr, vl, bus))
 
+    self.accel = actuators.accel
+    self.speed = CS.out.vEgo 
+    self.gas = apply_gas
+    self.brake = apply_brake
+
     new_actuators = actuators.copy()
-    new_actuators.steer = apply_steer
-    new_actuators.brake = apply_brake
-    new_actuators.gas = apply_gas
+    new_actuators.speed = self.speed
+    new_actuators.accel = self.accel
+    new_actuators.gas = self.gas
+    new_actuators.brake = self.brake
 
     return new_actuators, can_sends

@@ -4,7 +4,7 @@ from common.numpy_fast import mean
 from selfdrive.car.interfaces import CarStateBase
 from opendbc.can.parser import CANParser
 from selfdrive.config import Conversions as CV
-from selfdrive.car.retropilot.values import DBC
+from selfdrive.car.retropilot.values import DBC #, DetectedEcus
 
 class CarState(CarStateBase):
   def __init__(self, CP):
@@ -41,7 +41,7 @@ class CarState(CarStateBase):
     #Ibooster data
     if self.enabled and ret.brakePressed:
       self.enabled = False
-    ret.brakePressed = bool(cp.vl["OCELOT_BRAKE_STATUS"]['BRAKE_APPLIED'])
+    ret.brakePressed = bool(cp.vl["IBOOSTER_BRAKE_STATUS"]['BRAKE_APPLIED'])
 
     # if CP.enableGasInterceptor:
     #   ret.gas = (cp_body.vl["GAS_SENSOR"]['PED_GAS'] + cp_body.vl["GAS_SENSOR"]['PED_GAS2']) / 2.
@@ -102,14 +102,14 @@ class CarState(CarStateBase):
       ("RES_UP", "CRUISE", 0),
       ("SET_DOWN", "CRUISE", 0),
       ("CANCEL", "CRUISE", 0),
-      ("BRAKE_APPLIED", "OCELOT_BRAKE_STATUS", 0),
+      ("BRAKE_APPLIED", "IBOOSTER_BRAKE_STATUS", 0),
       ("WHEEL_FL", "WHEEL_SPEEDS", 0),
       ("WHEEL_FR", "WHEEL_SPEEDS", 0),
     ]
 
     checks = [
       ("CRUISE", 20),
-      ("OCELOT_BRAKE_STATUS", 20),
+      ("IBOOSTER_BRAKE_STATUS", 20),
       ("WHEEL_SPEEDS", 20),
     ]
 

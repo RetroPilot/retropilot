@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 from opendbc.can.parser import CANParser
 from cereal import car
-# from selfdrive.car.toyota.values import NO_DSU_CAR, DBC, TSS2_CAR
 from selfdrive.car.retropilot.values import DBC
 from selfdrive.car.interfaces import RadarInterfaceBase
+
 
 def _create_radar_can_parser(car_fingerprint):
   RADAR_A_MSGS = list(range(0x180, 0x190))
@@ -13,11 +13,10 @@ def _create_radar_can_parser(car_fingerprint):
   msg_b_n = len(RADAR_B_MSGS)
 
   signals = list(zip(['LONG_DIST'] * msg_a_n + ['NEW_TRACK'] * msg_a_n + ['LAT_DIST'] * msg_a_n +
-                ['REL_SPEED'] * msg_a_n + ['VALID'] * msg_a_n + ['SCORE'] * msg_b_n,
-                RADAR_A_MSGS * 5 + RADAR_B_MSGS,
-                [255] * msg_a_n + [1] * msg_a_n + [0] * msg_a_n + [0] * msg_a_n + [0] * msg_a_n + [0] * msg_b_n))
+                     ['REL_SPEED'] * msg_a_n + ['VALID'] * msg_a_n + ['SCORE'] * msg_b_n,
+                     RADAR_A_MSGS * 5 + RADAR_B_MSGS))
 
-  checks = list(zip(RADAR_A_MSGS + RADAR_B_MSGS, [20]*(msg_a_n + msg_b_n)))
+  checks = list(zip(RADAR_A_MSGS + RADAR_B_MSGS, [20] * (msg_a_n + msg_b_n)))
 
   return CANParser(DBC[car_fingerprint]['radar'], signals, checks, 1)
 
@@ -30,7 +29,8 @@ class RadarInterface(RadarInterfaceBase):
     self.RADAR_A_MSGS = list(range(0x180, 0x190))
     self.RADAR_B_MSGS = list(range(0x190, 0x1a0))
 
-
+    self.RADAR_A_MSGS = list(range(0x180, 0x190))
+    self.RADAR_B_MSGS = list(range(0x190, 0x1a0))
     self.valid_cnt = {key: 0 for key in self.RADAR_A_MSGS}
 
     self.rcp = _create_radar_can_parser(CP.carFingerprint)
@@ -39,7 +39,7 @@ class RadarInterface(RadarInterfaceBase):
 
     # No radar dbc for cars without DSU which are not TSS 2.0
     # TODO: make a adas dbc file for dsu-less models
-    self.no_radar = True
+    self.no_radar = True #CP.carFingerprint in NO_DSU_CAR and CP.carFingerprint not in TSS2_CAR
 
   def update(self, can_strings):
     if self.no_radar:
