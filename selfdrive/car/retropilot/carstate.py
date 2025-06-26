@@ -1,10 +1,10 @@
 from cereal import car
-from common.numpy_fast import mean
+# from common.numpy_fast import mean
 # from opendbc.can.can_define import CANDefine
 from selfdrive.car.interfaces import CarStateBase
 from opendbc.can.parser import CANParser
 from selfdrive.config import Conversions as CV
-from selfdrive.car.retropilot.values import DBC #, DetectedEcus
+from selfdrive.car.retropilot.values import DBC, DetectedEcus
 
 class CarState(CarStateBase):
   def __init__(self, CP):
@@ -20,51 +20,72 @@ class CarState(CarStateBase):
 
   def update(self, cp):
     ret = car.CarState.new_message()
-
     #Car specific information
-    # commmenting out before seeing what breaks
+
+    if DetectedEcus["RelayCore"]:
+      ret.leftBlinker = (cp.vl["RELAY_CORE_STATUS"]['RELAY_STATUS'] >> 7) & 1
+      ret.rightBlinker = (cp.vl["RELAY_CORE_STATUS"]['RELAY_STATUS'] >> 6) & 1
+
     # if self.CP.carFingerprint == CAR.SMART_ROADSTER_COUPE:
     #     ret.doorOpen = False #any([cp_body.vl["BODYCONTROL"]['RIGHT_DOOR'], cp_body.vl["BODYCONTROL"]['LEFT_DOOR']]) != 0
     #     ret.seatbeltUnlatched = False
-    #     ret.leftBlinker = False #cp_body.vl["BODYCONTROL"]['LEFT_SIGNAL']
-    #     ret.rightBlinker = False #cp_body.vl["BODYCONTROL"]['RIGHT_SIGNAL']
     #     ret.espDisabled = False #cp_body.vl["ABS"]['ESP_STATUS']
     #     ret.brakeLights = False #cp_body.vl["ABS"]['BRAKEPEDAL']
     #     can_gear = 0 #int(cp_body.vl["GEARBOX"]['GEARPOSITION'])
     #     ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(can_gear, None))
 
-    ret.wheelSpeeds.fl = (cp.vl["WHEEL_SPEEDS"]['WHEEL_FL'] * 0.01) * 1.23 * CV.KPH_TO_MS
-    ret.wheelSpeeds.fr = (cp.vl["WHEEL_SPEEDS"]['WHEEL_FR'] * 0.01) * 1.23 * CV.KPH_TO_MS
-    ret.wheelSpeeds.rl = (cp.vl["WHEEL_SPEEDS"]['WHEEL_FL'] * 0.01) * 1.23 * CV.KPH_TO_MS
-    ret.wheelSpeeds.rr = (cp.vl["WHEEL_SPEEDS"]['WHEEL_FR'] * 0.01) * 1.23 * CV.KPH_TO_MS
+    # ret.wheelSpeeds.fl = (cp.vl["WHEEL_SPEEDS"]['WHEEL_FL'] * 0.01) * 1.23 * CV.KPH_TO_MS
+    # ret.wheelSpeeds.fr = (cp.vl["WHEEL_SPEEDS"]['WHEEL_FR'] * 0.01) * 1.23 * CV.KPH_TO_MS
+    # ret.wheelSpeeds.rl = (cp.vl["WHEEL_SPEEDS"]['WHEEL_FL'] * 0.01) * 1.23 * CV.KPH_TO_MS
+    # ret.wheelSpeeds.rr = (cp.vl["WHEEL_SPEEDS"]['WHEEL_FR'] * 0.01) * 1.23 * CV.KPH_TO_MS
+    # ret.vEgoRaw = mean([ret.wheelSpeeds.fl, ret.wheelSpeeds.fr, ret.wheelSpeeds.rl, ret.wheelSpeeds.rr])
     
-    #Ibooster data
+    # Brakes
+    if DetectedEcus["iBooster"]:
+      ret.brakePressed = bool(cp.vl["IBOOSTER_BRAKE_STATUS"]['BRAKE_APPLIED'])
+    if DetectedEcus["BrakeActuator"]:
+      ret.brakePressed = bool(cp.vl["ACTUATOR_BRAKE_STATUS"]['BRAKE_APPLIED'])
     if self.enabled and ret.brakePressed:
       self.enabled = False
-    ret.brakePressed = bool(cp.vl["IBOOSTER_BRAKE_STATUS"]['BRAKE_APPLIED'])
 
-    # if CP.enableGasInterceptor:
-    #   ret.gas = (cp_body.vl["GAS_SENSOR"]['PED_GAS'] + cp_body.vl["GAS_SENSOR"]['PED_GAS2']) / 2.
-    #   ret.gasPressed = ret.gas > 15
-
-    ret.gas = 0
-    ret.gasPressed = False
+    # Gas
+    if DetectedEcus["GasInterceptor"]:
+      ret.gas = (cp.vl["PEDAL_GAS_SENSOR"]['PED_GAS'] + cp.vl["PEDAL_GAS_SENSOR"]['PED_GAS2']) / 2. #TODO: get divisor, offset, scalar from a param
+      ret.gasPressed = ret.gas > 15
+    if DetectedEcus["GasActuator"]:
+      ret.gas = cp.vl["ACTUATOR_GAS_SENSOR"]['THROTTLE_POS'] #TODO: get scalar and offset from a param
+      ret.gasPressed = False
+      ret.vEgoRaw = cp.vl["ACTUATOR_GAS_SENSOR"]['VSS'] #TODO: get scalar and offset from a param
 
     #calculate speed from wheel speeds
-    ret.vEgoRaw = mean([ret.wheelSpeeds.fl, ret.wheelSpeeds.fr, ret.wheelSpeeds.rl, ret.wheelSpeeds.rr])
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
     ret.standstill = ret.vEgoRaw < 0.001
+    
+    # Steering
+    if DetectedEcus["SteerInterceptor"]:
+      #TODO: get divisor, offset, scalar from a param
+      ret.steeringTorque = (cp.vl["INTERCEPTOR_STEERING_SENSOR"]['TRQ_2'] - cp.vl["INTERCEPTOR_STEERING_SENSOR"]['TRQ_1']) / 2 
+      ret.steeringPressed = abs(ret.steeringTorque) > 1000 
+      ret.steerWarning = cp.vl["INTERCEPTOR_STEERING_SENSOR"]['STATE'] != 0
+      ret.steeringTorqueEps = ret.steeringTorque * 100
+    if DetectedEcus["SteerActuator"]:
+      #TODO: get divisor, offset, scalar from a param
+      ret.steeringTorque = cp.vl["ACTUATOR_STEERING_STATUS"]['STEERING_TORQUE_DRIVER']
+      ret.steeringPressed = abs(ret.steeringTorque) > 1000 
+      ret.steerWarning = cp.vl["ACTUATOR_STEERING_STATUS"]['STEERING_OK'] != 0
+      ret.steerTorqueEps = cp.vl["ACTUATOR_STEERING_STATUS"]['STEERING_TORQUE_EPS'] 
+    if DetectedEcus["SteerActuatorSSC"]:
+      # TODO: implement SSC debug for warning
+      ret.steeringTorque = 0
+      ret.steeringTorqueEps = cp.vl["STEERING_STATUS_SSC"]['STEERING_TORQUE']
+      ret.steerWarning = False
+      ret.steeringPressed = False
 
-    #Toyota SAS
-    ret.steeringAngleDeg = 0 #cp.vl["TOYOTA_STEERING_ANGLE_SENSOR1"]['TOYOTA_STEER_ANGLE'] + cp.vl["TOYOTA_STEERING_ANGLE_SENSOR1"]['TOYOTA_STEER_FRACTION']
-    ret.steeringRateDeg = 0 #cp.vl["TOYOTA_STEERING_ANGLE_SENSOR1"]['TOYOTA_STEER_RATE']
-
-
-    #Steering information from smart standin ECU
-    ret.steeringTorque = 0 #cp.vl["STEERING_STATUS"]['STEER_TORQUE_DRIVER']
-    ret.steeringTorqueEps = 0 #cp.vl["STEERING_STATUS"]['STEER_TORQUE_EPS']
-    ret.steeringPressed = False #abs(ret.steeringTorque) > STEER_THRESHOLD
-    ret.steerWarning = False #cp.vl["STEERING_STATUS"]['STEERING_OK'] != 0
+    # Ocelot SAS
+    # for now we use a Toyota SAS connected to the Ocelot
+    # maybe we could detect the Toyota SAS and use it somehow?
+    ret.steeringAngleDeg = cp.vl["STEER_ANGLE_SENSOR"]['STEER_ANGLE']
+    ret.steeringRateDeg = cp.vl["STEER_ANGLE_SENSOR"]['STEER_RATE']
 
     ret.cruiseState.standstill = False
     ret.cruiseState.nonAdaptive = False
@@ -95,22 +116,10 @@ class CarState(CarStateBase):
 
   @staticmethod
   def get_can_parser(CP):
-
     signals = [
-      # sig_name, sig_address, default
-      ("ON_OFF", "CRUISE", 0),
-      ("RES_UP", "CRUISE", 0),
-      ("SET_DOWN", "CRUISE", 0),
-      ("CANCEL", "CRUISE", 0),
-      ("BRAKE_APPLIED", "IBOOSTER_BRAKE_STATUS", 0),
-      ("WHEEL_FL", "WHEEL_SPEEDS", 0),
-      ("WHEEL_FR", "WHEEL_SPEEDS", 0),
     ]
 
     checks = [
-      ("CRUISE", 20),
-      ("IBOOSTER_BRAKE_STATUS", 20),
-      ("WHEEL_SPEEDS", 20),
     ]
 
     return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, 0)
