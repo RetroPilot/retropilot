@@ -85,7 +85,7 @@ class CarState(CarStateBase):
     # for now we use a Toyota SAS connected to the Ocelot
     # maybe we could detect the Toyota SAS and use it somehow?
     ret.steeringAngleDeg = cp.vl["STEER_ANGLE_SENSOR"]['STEER_ANGLE']
-    ret.steeringRateDeg = cp.vl["STEER_ANGLE_SENSOR"]['STEER_RATE']
+    ret.steeringRateDeg = 0. #cp.vl["STEER_ANGLE_SENSOR"]['STEER_RATE']
 
     ret.cruiseState.standstill = False
     ret.cruiseState.nonAdaptive = False
@@ -117,10 +117,94 @@ class CarState(CarStateBase):
   @staticmethod
   def get_can_parser(CP):
     signals = [
+      ("STEER_ANGLE", "STEER_ANGLE_SENSOR"),
+      ("VSS_PULSE_US", "SPEED"),
+      ("CAN_SPEED", "SPEED"),
+      ("MODE", "SPEED"),
+      ("ADC_1", "CRUISE"),
+      ("ADC_2", "CRUISE"),
+      ("ON_OFF", "CRUISE"),
+      ("RES_UP", "CRUISE"),
+      ("SET_DOWN", "CRUISE"),
+      ("CANCEL", "CRUISE"),
+      ("MODE", "CRUISE"),
+    ]
+    checks = [
+      ("STEER_ANGLE_SENSOR", 20),
+      ("SPEED", 20),
     ]
 
-    checks = [
-    ]
+    if DetectedEcus["GasInterceptor"]:
+      signals += [
+        ("PED_GAS", "PEDAL_GAS_SENSOR"),
+        ("PED_GAS2", "PEDAL_GAS_SENSOR"),
+        ("STATE", "PEDAL_GAS_SENSOR"),
+      ]
+      checks += [
+        ("PEDAL_GAS_SENSOR", 20)
+      ]
+    if DetectedEcus["GasActuator"]:
+      signals += [
+        ("THROTTLE_POS", "ACTUATOR_GAS_SENSOR"),
+      ]
+      checks += [
+        ("ACTUATOR_GAS_SENSOR", 20)
+      ]
+    if DetectedEcus["SteerInterceptor"]:
+      signals += [
+        ("TRQ1", "INTERCEPTOR_STEERING_SENSOR"),
+        ("TRQ2", "INTERCEPTOR_STEERING_SENSOR"),
+        ("STATE", "INTERCEPTOR_STEERING_SENSOR"),
+      ]
+      checks += [
+        ("INTERCEPTOR_STEERING_SENSOR", 20)
+      ]
+    if DetectedEcus["SteerActuator"]:
+      signals += [
+        ("STEERING_TORQUE_EPS", "ACTUATOR_STEERING_STATUS"),
+        ("STEERING_TORQUE_DRIVER", "ACTUATOR_STEERING_STATUS"),
+        ("STEERING_OK", "ACTUATOR_STEERING_STATUS"),
+        ("STATUS", "ACTUATOR_STEERING_STATUS"),
+      ]
+      checks += [
+        ("ACTUATOR_STEERING_STATUS", 20)
+      ]
+    if DetectedEcus["SteerActuatorSSC"]:
+      signals += [
+        ("STEERING_ANGLE", "STEERING_STATUS_SSC"),
+        ("STEERING_SPEED", "STEERING_STATUS_SSC"),
+        ("STEERING_TORQUE", "STEERING_STATUS_SSC"),
+        ("CONTROL_STATUS", "STEERING_STATUS_SSC"),
+      ]
+      checks += [
+        ("STEERING_STATUS_SSC", 20)
+      ]
+    if DetectedEcus["iBooster"]:
+      signals += [
+        ("BRAKE_APPLIED", "IBOOSTER_STATUS"),
+        ("DRIVER_BRAKE_APPLIED", "IBOOSTER_STATUS"),
+        ("BRAKE_OK", "IBOOSTER_STATUS"),
+        ("STATUS", "IBOOSTER_STATUS"),
+      ]
+      checks += [
+        ("IBOOSTER_STATUS", 20)
+      ]
+    if DetectedEcus["BrakeActuator"]:
+      signals += [
+        ("DRIVER_BRAKE_APPLIED", "ACTUATOR_BRAKE_STATUS"),
+        ("BRAKE_OK", "ACTUATOR_BRAKE_STATUS"),
+        ("STATUS", "ACTUATOR_BRAKE_STATUS"),
+      ]
+      checks += [
+        ("ACTUATOR_BRAKE_STATUS", 20)
+      ]
+    if DetectedEcus["RelayCore"]:
+      signals += [
+        ("RELAY_CORE_RELAY_STATUSSTATUS", "RELAY_CORE_COMMAND"),
+      ]
+      checks += [
+        ("RELAY_CORE_COMMAND", 20)
+      ]
 
     return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, 0)
 
