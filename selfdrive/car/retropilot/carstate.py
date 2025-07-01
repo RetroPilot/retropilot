@@ -21,6 +21,7 @@ class CarState(CarStateBase):
   def update(self, cp):
     ret = car.CarState.new_message()
     #Car specific information
+    print(DetectedEcus)
 
     if DetectedEcus["RelayCore"]:
       ret.leftBlinker = (cp.vl["RELAY_CORE_STATUS"]['RELAY_STATUS'] >> 7) & 1
@@ -55,7 +56,14 @@ class CarState(CarStateBase):
     if DetectedEcus["GasActuator"]:
       ret.gas = cp.vl["ACTUATOR_GAS_SENSOR"]['THROTTLE_POS'] #TODO: get scalar and offset from a param
       ret.gasPressed = False
-      ret.vEgoRaw = cp.vl["ACTUATOR_GAS_SENSOR"]['VSS'] #TODO: get scalar and offset from a param
+
+    vss_us = cp.vl["SPEED"]['VSS_PULSE_US']
+
+    if vss_us > 0:
+      hz = 1e6 / vss_us
+      ret.vEgoRaw = hz * (3600/4000) * CV.MPH_TO_MS
+    else:
+      ret.vEgoRaw = 0.0
 
     #calculate speed from wheel speeds
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
@@ -82,10 +90,8 @@ class CarState(CarStateBase):
       ret.steeringPressed = False
 
     # Ocelot SAS
-    # for now we use a Toyota SAS connected to the Ocelot
-    # maybe we could detect the Toyota SAS and use it somehow?
     ret.steeringAngleDeg = cp.vl["STEER_ANGLE_SENSOR"]['STEER_ANGLE']
-    ret.steeringRateDeg = 0. #cp.vl["STEER_ANGLE_SENSOR"]['STEER_RATE']
+    ret.steeringRateDeg = cp.vl["STEER_ANGLE_SENSOR"]['STEER_RATE']
 
     ret.cruiseState.standstill = False
     ret.cruiseState.nonAdaptive = False
@@ -118,6 +124,7 @@ class CarState(CarStateBase):
   def get_can_parser(CP):
     signals = [
       ("STEER_ANGLE", "STEER_ANGLE_SENSOR"),
+      ("STEER_RATE", "STEER_ANGLE_SENSOR"),
       ("VSS_PULSE_US", "SPEED"),
       ("CAN_SPEED", "SPEED"),
       ("MODE", "SPEED"),
@@ -132,6 +139,8 @@ class CarState(CarStateBase):
     checks = [
       ("STEER_ANGLE_SENSOR", 20),
       ("SPEED", 20),
+      ("CRUISE", 20),
+      ("ENGINE", 20),
     ]
 
     if DetectedEcus["GasInterceptor"]:
@@ -152,8 +161,8 @@ class CarState(CarStateBase):
       ]
     if DetectedEcus["SteerInterceptor"]:
       signals += [
-        ("TRQ1", "INTERCEPTOR_STEERING_SENSOR"),
-        ("TRQ2", "INTERCEPTOR_STEERING_SENSOR"),
+        ("TRQ_1", "INTERCEPTOR_STEERING_SENSOR"),
+        ("TRQ_2", "INTERCEPTOR_STEERING_SENSOR"),
         ("STATE", "INTERCEPTOR_STEERING_SENSOR"),
       ]
       checks += [
