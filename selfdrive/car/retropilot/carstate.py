@@ -21,7 +21,6 @@ class CarState(CarStateBase):
   def update(self, cp):
     ret = car.CarState.new_message()
     #Car specific information
-    print(DetectedEcus)
 
     if DetectedEcus["RelayCore"]:
       ret.leftBlinker = bool((int(cp.vl["RELAY_CORE_STATUS"]['RELAY_STATUS']) >> 7) & 1)
