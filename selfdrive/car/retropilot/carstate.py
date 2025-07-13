@@ -190,13 +190,13 @@ class CarState(CarStateBase):
       ]
     if DetectedEcus["iBooster"]:
       signals += [
-        ("BRAKE_APPLIED", "IBOOSTER_STATUS"),
-        ("DRIVER_BRAKE_APPLIED", "IBOOSTER_STATUS"),
-        ("BRAKE_OK", "IBOOSTER_STATUS"),
-        ("STATUS", "IBOOSTER_STATUS"),
+        ("BRAKE_APPLIED", "IBOOSTER_BRAKE_STATUS"),
+        ("DRIVER_BRAKE_APPLIED", "IBOOSTER_BRAKE_STATUS"),
+        ("BRAKE_OK", "IBOOSTER_BRAKE_STATUS"),
+        ("STATUS", "IBOOSTER_BRAKE_STATUS"),
       ]
       checks += [
-        ("IBOOSTER_STATUS", 20)
+        ("IBOOSTER_BRAKE_STATUS", 20)
       ]
     if DetectedEcus["BrakeActuator"]:
       signals += [
@@ -209,10 +209,10 @@ class CarState(CarStateBase):
       ]
     if DetectedEcus["RelayCore"]:
       signals += [
-        ("RELAY_CORE_STATUS", "RELAY_STATUS"),
+        ("RELAY_STATUS", "RELAY_CORE_STATUS"),
       ]
       checks += [
-        ("RELAY_STATUS", 20)
+        ("RELAY_CORE_STATUS", 20)
       ]
 
     return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, 0)
