@@ -209,10 +209,10 @@ class CarState(CarStateBase):
       ]
     if DetectedEcus["RelayCore"]:
       signals += [
-        ("RELAY_CORE_RELAY_STATUSSTATUS", "RELAY_CORE_COMMAND"),
+        ("RELAY_CORE_STATUS", "RELAY_STATUS"),
       ]
       checks += [
-        ("RELAY_CORE_COMMAND", 20)
+        ("RELAY_STATUS", 20)
       ]
 
     return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, 0)
