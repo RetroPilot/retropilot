@@ -24,8 +24,8 @@ class CarState(CarStateBase):
     print(DetectedEcus)
 
     if DetectedEcus["RelayCore"]:
-      ret.leftBlinker = (int(cp.vl["RELAY_CORE_STATUS"]['RELAY_STATUS']) >> 7) & 1
-      ret.rightBlinker = (int(cp.vl["RELAY_CORE_STATUS"]['RELAY_STATUS']) >> 6) & 1
+      ret.leftBlinker = bool((int(cp.vl["RELAY_CORE_STATUS"]['RELAY_STATUS']) >> 7) & 1)
+      ret.rightBlinker = bool((int(cp.vl["RELAY_CORE_STATUS"]['RELAY_STATUS']) >> 6) & 1)
 
     # if self.CP.carFingerprint == CAR.SMART_ROADSTER_COUPE:
     #     ret.doorOpen = False #any([cp_body.vl["BODYCONTROL"]['RIGHT_DOOR'], cp_body.vl["BODYCONTROL"]['LEFT_DOOR']]) != 0
