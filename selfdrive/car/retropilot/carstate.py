@@ -18,6 +18,13 @@ class CarState(CarStateBase):
     self.enabled = False
     self.enabled_last = True
 
+    self.prev_btn_states = {
+      "ON_OFF": False,
+      "RES_UP": False,
+      "SET_DOWN": False,
+      "CANCEL": False,
+    }
+
   def update(self, cp):
     ret = car.CarState.new_message()
     #Car specific information
@@ -82,23 +89,34 @@ class CarState(CarStateBase):
     ret.cruiseState.standstill = False
     ret.cruiseState.nonAdaptive = False
 
-    if cp.vl["CRUISE"]["ON_OFF"]:
-      self.armed = not(self.armed)
-      if self.armed:
-        if self.enabled:
-          self.enabled_last = True
-          if cp.vl["CRUISE"]["RES_UP"]:
-            self.setSpeed += 5*CV.MPH_TO_MS
-          if cp.vl["CRUISE"]["SET_DOWN"] and self.setSpeed >= 10*CV.MPH_TO_MS:
-            self.setSpeed -= 5*CV.MPH_TO_MS
-          if cp.vl["CRUISE"]["CANCEL"]:
-            self.enabled = False
-          self.enabled_last = True
-        elif cp.vl["CRUISE"]["SET_DOWN"]:
-          self.setSpeed = ret.vEgo
+    if cp.vl["CRUISE"]["ON_OFF"] and not self.prev_btn_states["ON_OFF"]:
+      self.armed = not self.armed
+      if not self.armed:
+        self.enabled = False
+        
+    if self.armed:
+      if self.enabled:
+        self.enabled_last = True
+        if cp.vl["CRUISE"]["RES_UP"] and not self.prev_btn_states["RES_UP"]:
+          self.setSpeed += 5 * CV.MPH_TO_MS
+        if cp.vl["CRUISE"]["SET_DOWN"] and not self.prev_btn_states["SET_DOWN"]:
+          if self.setSpeed >= 10 * CV.MPH_TO_MS:
+            self.setSpeed -= 5 * CV.MPH_TO_MS
+        if cp.vl["CRUISE"]["CANCEL"] and not self.prev_btn_states["CANCEL"]:
+          self.enabled = False
+      else:
+        if cp.vl["CRUISE"]["SET_DOWN"] and not self.prev_btn_states["SET_DOWN"]:
+          self.setSpeed = round((ret.vEgo * CV.MS_TO_MPH) / 5.0) * 5.0
           self.enabled = True
-        elif cp.vl["CRUISE"]["RES_UP"] and self.enabled_last:
-          self.enabled = True
+
+        if cp.vl["CRUISE"]["RES_UP"] and not self.prev_btn_states["RES_UP"]:
+          if self.enabled_last:
+            self.enabled = True
+
+    self.prev_btn_states["ON_OFF"] = cp.vl["CRUISE"]["ON_OFF"]
+    self.prev_btn_states["RES_UP"] = cp.vl["CRUISE"]["RES_UP"]
+    self.prev_btn_states["SET_DOWN"] = cp.vl["CRUISE"]["SET_DOWN"]
+    self.prev_btn_states["CANCEL"] = cp.vl["CRUISE"]["CANCEL"]
 
     ret.cruiseState.available = self.armed
     ret.cruiseState.enabled = self.enabled
