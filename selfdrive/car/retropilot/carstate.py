@@ -27,6 +27,7 @@ class CarState(CarStateBase):
 
   def update(self, cp):
     ret = car.CarState.new_message()
+    ret.gearShifter = self.parse_gear_shifter("D")
     #Car specific information
 
     if DetectedEcus["RelayCore"]:
@@ -35,7 +36,7 @@ class CarState(CarStateBase):
 
     # Brakes
     if DetectedEcus["iBooster"]:
-      ret.brakePressed = bool(cp.vl["IBOOSTER_BRAKE_STATUS"]['BRAKE_APPLIED'])
+      ret.brakePressed = bool(cp.vl["IBOOSTER_BRAKE_STATUS"]['DRIVER_BRAKE_APPLIED'])
     if DetectedEcus["BrakeActuator"]:
       ret.brakePressed = bool(cp.vl["ACTUATOR_BRAKE_STATUS"]['BRAKE_APPLIED'])
     if self.enabled and ret.brakePressed:
