@@ -26,20 +26,6 @@ class CarState(CarStateBase):
       ret.leftBlinker = bool((int(cp.vl["RELAY_CORE_STATUS"]['RELAY_STATUS']) >> 7) & 1)
       ret.rightBlinker = bool((int(cp.vl["RELAY_CORE_STATUS"]['RELAY_STATUS']) >> 6) & 1)
 
-    # if self.CP.carFingerprint == CAR.SMART_ROADSTER_COUPE:
-    #     ret.doorOpen = False #any([cp_body.vl["BODYCONTROL"]['RIGHT_DOOR'], cp_body.vl["BODYCONTROL"]['LEFT_DOOR']]) != 0
-    #     ret.seatbeltUnlatched = False
-    #     ret.espDisabled = False #cp_body.vl["ABS"]['ESP_STATUS']
-    #     ret.brakeLights = False #cp_body.vl["ABS"]['BRAKEPEDAL']
-    #     can_gear = 0 #int(cp_body.vl["GEARBOX"]['GEARPOSITION'])
-    #     ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(can_gear, None))
-
-    # ret.wheelSpeeds.fl = (cp.vl["WHEEL_SPEEDS"]['WHEEL_FL'] * 0.01) * 1.23 * CV.KPH_TO_MS
-    # ret.wheelSpeeds.fr = (cp.vl["WHEEL_SPEEDS"]['WHEEL_FR'] * 0.01) * 1.23 * CV.KPH_TO_MS
-    # ret.wheelSpeeds.rl = (cp.vl["WHEEL_SPEEDS"]['WHEEL_FL'] * 0.01) * 1.23 * CV.KPH_TO_MS
-    # ret.wheelSpeeds.rr = (cp.vl["WHEEL_SPEEDS"]['WHEEL_FR'] * 0.01) * 1.23 * CV.KPH_TO_MS
-    # ret.vEgoRaw = mean([ret.wheelSpeeds.fl, ret.wheelSpeeds.fr, ret.wheelSpeeds.rl, ret.wheelSpeeds.rr])
-    
     # Brakes
     if DetectedEcus["iBooster"]:
       ret.brakePressed = bool(cp.vl["IBOOSTER_BRAKE_STATUS"]['BRAKE_APPLIED'])
@@ -55,8 +41,9 @@ class CarState(CarStateBase):
     if DetectedEcus["GasActuator"]:
       ret.gas = cp.vl["ACTUATOR_GAS_SENSOR"]['THROTTLE_POS'] #TODO: get scalar and offset from a param
       ret.gasPressed = False
-
-    vss_us = cp.vl["SPEED"]['VSS_PULSE_US']
+      
+    # vehicle speed. TODO: handle CAN speed as well
+    vss_us = int(cp.vl["SPEED"]['VSS_PULSE_US']) << 4
 
     if vss_us > 0:
       hz = 1e6 / vss_us

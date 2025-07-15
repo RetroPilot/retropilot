@@ -6,20 +6,20 @@ Ecu = car.CarParams.Ecu
 
 DetectedEcus = {
   "GasInterceptor": False,
-  "GasActuator": False,
-  "SteerInterceptor": False,
+  "GasActuator": True,
+  "SteerInterceptor": True,
   "SteerActuator": False,
   "SteerActuatorSSC": False,
-  "iBooster": False,
+  "iBooster": True,
   "BrakeActuator": False,
   "RelayCore": False,
   "Radar": False,
 }
 
-# edit this to 
+# TODO: RelayCore flash parameters instead
 RelayMsg = {
-  "L_TURN": 0b00000001,
-  "R_TURN": 0b00000010,
+  "L_TURN": 0b00000010,
+  "R_TURN": 0b00000001,
   "HAZARD": 0b00000011,
   "TAIL": 0b00000100,
   "HEAD": 0b00001100,
@@ -28,9 +28,9 @@ RelayMsg = {
   
 # Steer torque limits
 class SteerLimitParams:
-  STEER_MAX = 350
-  STEER_DELTA_UP = 7       # 1.5s time to peak torque
-  STEER_DELTA_DOWN = 7     # always lower than 45 otherwise the Rav4 faults (Prius seems ok with 50)
+  STEER_MAX = 300
+  STEER_DELTA_UP = 5       # 1.5s time to peak torque
+  STEER_DELTA_DOWN = 5     # always lower than 45 otherwise the Rav4 faults (Prius seems ok with 50)
   STEER_ERROR_MAX = STEER_MAX     # max delta between torque cmd and torque motor
 
 class CAR:

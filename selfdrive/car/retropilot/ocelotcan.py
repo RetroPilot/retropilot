@@ -45,7 +45,7 @@ def create_gas_actuator_command(packer, enabled, gas_amount, idx):
     "COUNTER": idx & 0xF,
   }
   if enabled:
-    values["THROTTLE_REQ"] = (gas_amount * 125)
+    values["THROTTLE_REQ"] = (gas_amount * 500)
 
   return packer.make_can_msg("ACTUATOR_GAS_COMMAND", 0, values)
 

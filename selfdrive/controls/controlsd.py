@@ -571,8 +571,8 @@ class Controls:
 
     button_pressed = self.joystick_mode and self.sm.rcv_frame['testJoystick'] > 0 and self.sm['testJoystick'].buttons[0]
     if self.joystick_mode:
-      CC.bodycontrol.relayCoreCMD = (self.sm['testJoystick'].buttons[4] << 0) | (self.sm['testJoystick'].buttons[3] << 1)
-      CC.bodycontrol.relayCoreCMD |= (self.sm['testJoystick'].buttons[2] << 2) | (self.sm['testJoystick'].buttons[1] << 3)
+      CC.bodycontrol.relayCoreCMD = (self.sm['testJoystick'].buttons[4] << 1) | (self.sm['testJoystick'].buttons[3] << 0)
+      CC.bodycontrol.relayCoreCMD |= (self.sm['testJoystick'].buttons[2] << 5) | (self.sm['testJoystick'].buttons[1] << 6)
     if button_pressed and not self.btn_last:
       self.enabled = not self.enabled
       self.active = not self.active

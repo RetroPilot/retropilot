@@ -41,7 +41,7 @@ class CarController():
 
     if active:
       apply_brake = 0.0
-      apply_gas = clip(actuators.accel, 0.0, 0.5)
+      apply_gas = clip(actuators.accel, 0.0, 1.0)
       if actuators.accel < 0:
         apply_brake = clip(-actuators.accel, 0.0, 1.0)
     else:
@@ -66,8 +66,8 @@ class CarController():
         can_sends.append(create_gas_interceptor_command(self.packer, apply_gas, frame//2))
       if DetectedEcus["GasActuator"]:
         can_sends.append(create_gas_actuator_command(self.packer, enabled, apply_gas, frame//2))
-      if DetectedEcus["SteerActuator"]:
-        can_sends.append(create_steer_interceptor_command(self.packer, apply_steer, apply_steer_req, frame//2))
+      # if DetectedEcus["SteerActuator"]:
+      #   can_sends.append(create_steer_actuator_command(self.packer, apply_steer, apply_steer_req, frame//2))
       if DetectedEcus["RelayCore"]:
         can_sends.append(create_relay_command(self.packer, enabled, relays.relayCoreCMD, frame//2))
     
@@ -75,7 +75,7 @@ class CarController():
     if DetectedEcus["iBooster"]:
       can_sends.append(create_iBooster_cmd(self.packer, enabled, apply_brake, frame))
     if DetectedEcus["SteerInterceptor"]:
-      can_sends.append(create_steer_interceptor_command(self.packer, apply_steer, apply_steer_req, frame))
+      can_sends.append(create_steer_interceptor_command(self.packer, new_steer, apply_steer_req, frame))
       
     # #*** static msgs ***
     # TODO: add static messages here. stuff like radar if detected, etc
