@@ -283,12 +283,20 @@ class DaemonProcess(ManagerProcess):
   def stop(self, retry=True, block=True) -> None:
     pass
 
-
 def ensure_running(procs: ValuesView[ManagerProcess], started: bool, driverview: bool=False, not_run: Optional[List[str]]=None) -> None:
   if not_run is None:
     not_run = []
 
   for p in procs:
+    if p.name == 'ui':
+      if p.proc is not None and not p.proc.is_alive():
+        print('ui is dead, clearing proc and restarting')
+        p.proc = None  # ☑ clear out old Process so .start() works
+        p.start()
+      elif p.proc is None:
+        print('ui not started, starting')
+        p.start()
+
     if p.name in not_run:
       p.stop(block=False)
     elif not p.enabled:

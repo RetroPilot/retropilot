@@ -48,6 +48,10 @@ class CarController():
       apply_gas = 0.0
       apply_brake = 0.0
 
+    # don't gas and brake
+    if CS.out.gas > 450:
+      apply_brake = 0
+
     # print("enabled: ", enabled, "active: ", active, "actuators: ", apply_gas, apply_brake, actuators.steer)
     # for ecu, present in DetectedEcus.items():
     #   if present:
@@ -75,7 +79,7 @@ class CarController():
     if DetectedEcus["iBooster"]:
       can_sends.append(create_iBooster_cmd(self.packer, enabled, apply_brake, frame))
     if DetectedEcus["SteerInterceptor"]:
-      can_sends.append(create_steer_interceptor_command(self.packer, new_steer, apply_steer_req, frame))
+      can_sends.append(create_steer_interceptor_command(self.packer, apply_steer, apply_steer_req, frame))
       
     # #*** static msgs ***
     # TODO: add static messages here. stuff like radar if detected, etc

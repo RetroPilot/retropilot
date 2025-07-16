@@ -99,15 +99,15 @@ class CarState(CarStateBase):
       if self.enabled:
         self.enabled_last = True
         if cp.vl["CRUISE"]["RES_UP"] and not self.prev_btn_states["RES_UP"]:
-          self.setSpeed += 5 * CV.MPH_TO_MS
+          self.setSpeed += 1 * CV.MPH_TO_MS
         if cp.vl["CRUISE"]["SET_DOWN"] and not self.prev_btn_states["SET_DOWN"]:
           if self.setSpeed >= 10 * CV.MPH_TO_MS:
-            self.setSpeed -= 5 * CV.MPH_TO_MS
+            self.setSpeed -= 1 * CV.MPH_TO_MS
         if cp.vl["CRUISE"]["CANCEL"] and not self.prev_btn_states["CANCEL"]:
           self.enabled = False
       else:
         if cp.vl["CRUISE"]["SET_DOWN"] and not self.prev_btn_states["SET_DOWN"]:
-          self.setSpeed = round((ret.vEgo * CV.MS_TO_MPH) / 5.0) * 5.0
+          self.setSpeed = ret.vEgo
           self.enabled = True
 
         if cp.vl["CRUISE"]["RES_UP"] and not self.prev_btn_states["RES_UP"]:
