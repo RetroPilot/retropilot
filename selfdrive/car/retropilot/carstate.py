@@ -30,9 +30,10 @@ class CarState(CarStateBase):
     ret.gearShifter = self.parse_gear_shifter("D")
     #Car specific information
 
+    #TODO: implement params reading for mapping these
     if DetectedEcus["RelayCore"]:
-      ret.leftBlinker = bool((int(cp.vl["RELAY_CORE_STATUS"]['RELAY_STATUS']) >> 7) & 1)
-      ret.rightBlinker = bool((int(cp.vl["RELAY_CORE_STATUS"]['RELAY_STATUS']) >> 6) & 1)
+      ret.leftBlinker = bool((int(cp.vl["RELAY_CORE_STATUS"]['RELAY_STATUS']) >> 0) & 1)
+      ret.rightBlinker = bool((int(cp.vl["RELAY_CORE_STATUS"]['RELAY_STATUS']) >> 1) & 1)
 
     # Brakes
     if DetectedEcus["iBooster"]:
@@ -50,14 +51,7 @@ class CarState(CarStateBase):
       ret.gas = cp.vl["ACTUATOR_GAS_SENSOR"]['THROTTLE_POS'] #TODO: get scalar and offset from a param
       ret.gasPressed = False
       
-    # vehicle speed. TODO: handle CAN speed as well
-    vss_us = int(cp.vl["SPEED"]['VSS_PULSE_US']) << 4
-
-    if vss_us > 0:
-      hz = 1e6 / vss_us
-      ret.vEgoRaw = hz * (3600/4000) * CV.MPH_TO_MS
-    else:
-      ret.vEgoRaw = 0.0
+    ret.vEgoRaw = (cp.vl["SPEED"]['CAN_SPEED']) * CV.KPH_TO_MS
 
     #calculate speed from wheel speeds
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
@@ -66,8 +60,8 @@ class CarState(CarStateBase):
     # Steering
     if DetectedEcus["SteerInterceptor"]:
       #TODO: get divisor, offset, scalar from a param
-      ret.steeringTorque = (cp.vl["INTERCEPTOR_STEERING_SENSOR"]['TRQ_2'] - cp.vl["INTERCEPTOR_STEERING_SENSOR"]['TRQ_1']) / 2 
-      ret.steeringPressed = abs(ret.steeringTorque) > 1000 
+      ret.steeringTorque = ((cp.vl["INTERCEPTOR_STEERING_SENSOR"]['TRQ_2'] - cp.vl["INTERCEPTOR_STEERING_SENSOR"]['TRQ_1']) / 2) + 100
+      ret.steeringPressed = abs(ret.steeringTorque) > 40
       ret.steerWarning = cp.vl["INTERCEPTOR_STEERING_SENSOR"]['STATE'] != 0
       ret.steeringTorqueEps = ret.steeringTorque * 100
     if DetectedEcus["SteerActuator"]:

@@ -57,8 +57,9 @@ class CarController():
     #   if present:
     #     print(f"Detected ECU: {ecu}")
 
-    # steer torque
-    new_steer = int(round(actuators.steer * SteerLimitParams.STEER_MAX))
+    # steer torque (on interceptor, max torque should scale inversely with speed)
+    steer_lim = SteerLimitParams.STEER_MAX * (1 - (CS.out.vEgo / 90)) 
+    new_steer = int(round(actuators.steer * steer_lim))
     apply_steer = apply_toyota_steer_torque_limits(new_steer, self.last_steer, CS.out.steeringTorqueEps, SteerLimitParams)
     self.steer_rate_limited = new_steer != apply_steer
 

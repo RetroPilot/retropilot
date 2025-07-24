@@ -27,7 +27,7 @@ class CarInterface(CarInterfaceBase):
     ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.retropilot)]
     ret.safetyConfigs[0].safetyParam = 100
 
-    ret.steerActuatorDelay = 0.12  # Default delay, Prius has larger delay
+    ret.steerActuatorDelay = 0.0  # Default delay, Prius has larger delay
     ret.steerLimitTimer = 0.4
     ret.stoppingControl = True
 
@@ -55,10 +55,10 @@ class CarInterface(CarInterfaceBase):
     ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP = [[0.], [0.]]
     ret.minEnableSpeed = -1.
 
-    ret.wheelbase = 2.70
-    ret.steerRatio = 18.27
+    ret.wheelbase = 2.598
+    ret.steerRatio = 14.0
     tire_stiffness_factor = 0.444
-    ret.mass = 2860. * CV.LB_TO_KG + STD_CARGO_KG
+    ret.mass = 2425. * CV.LB_TO_KG + STD_CARGO_KG
     set_lat_tune(ret.lateralTuning, LatTunes.PID_A)
 
     # end tuning

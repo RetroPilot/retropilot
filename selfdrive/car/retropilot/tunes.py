@@ -23,7 +23,7 @@ def set_long_tune(tune, name):
   # Default longitudinal tune
   elif name == LongTunes.ACTUATOR:
     tune.deadzoneBP = [0., 9.]
-    tune.deadzoneV = [0., .15]
+    tune.deadzoneV = [0., .75]
     tune.kpBP = [0., 5., 35.]
     tune.kiBP = [0., 35.]
     tune.kpV = [3.6, 2.4, 1.5]

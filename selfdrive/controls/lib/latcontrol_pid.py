@@ -37,9 +37,9 @@ class LatControlPID(LatControl):
     try:
       with open(TUNE_FILE, "r") as f:
         data = json.load(f)
-        kp = float(data.get("kp", self.kp))
-        ki = float(data.get("ki", self.ki))
-        kf = float(data.get("kf", self.kf))
+        kp = float(data.get("lat_kp", self.kp))
+        ki = float(data.get("lat_ki", self.ki))
+        kf = float(data.get("lat_kf", self.kf))
 
         if kp != self.kp or ki != self.ki or kf != self.kf:
           print(f"[Tuning] Reloading PID: kp={kp}, ki={ki}, kf={kf}")
