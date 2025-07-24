@@ -61,7 +61,7 @@ class CarState(CarStateBase):
     if DetectedEcus["SteerInterceptor"]:
       #TODO: get divisor, offset, scalar from a param
       ret.steeringTorque = ((cp.vl["INTERCEPTOR_STEERING_SENSOR"]['TRQ_2'] - cp.vl["INTERCEPTOR_STEERING_SENSOR"]['TRQ_1']) / 2) + 100
-      ret.steeringPressed = abs(ret.steeringTorque) > 40
+      ret.steeringPressed = cp.vl["INTERCEPTOR_STEERING_SENSOR"]['OVERRIDE'] != 0
       ret.steerWarning = cp.vl["INTERCEPTOR_STEERING_SENSOR"]['STATE'] != 0
       ret.steeringTorqueEps = ret.steeringTorque * 100
     if DetectedEcus["SteerActuator"]:
@@ -163,6 +163,7 @@ class CarState(CarStateBase):
         ("TRQ_1", "INTERCEPTOR_STEERING_SENSOR"),
         ("TRQ_2", "INTERCEPTOR_STEERING_SENSOR"),
         ("STATE", "INTERCEPTOR_STEERING_SENSOR"),
+        ("OVERRIDE", "INTERCEPTOR_STEERING_SENSOR"),
       ]
       checks += [
         ("INTERCEPTOR_STEERING_SENSOR", 20)
