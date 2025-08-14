@@ -81,7 +81,5 @@ selfdrive/modeld/thneed/include/**/* filter=lfs diff=lfs merge=lfs -text
 third_party/openmax/**/* filter=lfs diff=lfs merge=lfs -text
 selfdrive/controls/lib/longitudinal_mpc/mpc_export/**/* filter=lfs diff=lfs merge=lfs -text
 selfdrive/controls/lib/longitudinal_mpc_model/lib_mpc_export/**/* filter=lfs diff=lfs merge=lfs -text
-Pipfile filter=lfs diff=lfs merge=lfs -text
-Pipfile.lock filter=lfs diff=lfs merge=lfs -text
 poetry.lock filter=lfs diff=lfs merge=lfs -text
 *.qm filter=lfs diff=lfs merge=lfs -text
